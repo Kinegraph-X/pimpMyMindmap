@@ -1,0 +1,23 @@
+<paquet
+	prefix="jsLinkedTree"
+	categorie="multimedia"
+	version="0.0.1"
+	etat="dev"
+	compatibilite="[3.0.0;3.*]"
+	logo=""
+	documentation=""
+>
+
+	<nom>jsLinkedTree</nom>
+	
+
+	<auteur>Sylvain</auteur>
+
+	<licence>GNU/GPL</licence>
+	<necessite nom="preloadJS" compatibilite="[0.1.0;]" />
+
+	<!-- <pipeline nom="insert_head" inclure="jsjsLinkedTreeStarter_pipelines.php" /> -->
+	<!-- <pipeline nom="insert_head_css" inclure="jsjsLinkedTreeStarter_pipelines.php" /> -->
+	<!-- <pipeline nom="header_prive" inclure="jsjsLinkedTreeStarter_pipelines.php" /> -->
+
+</paquet>
