@@ -8,22 +8,15 @@ var TypeManager = require('src/core/TypeManager');
 var App = require('src/core/AppIgnition');
 var CreateStyle = require('src/UI/generics/GenericStyleConstructor');
 
+const createMenuDef = require('src/clientRoutes/menuDef');
 
 var rootViewInitializer = function(options) {
 	var init = function(parentView, parent) {
-		var linkedTreeComponentDef = TypeManager.mockGroupDef();
-		linkedTreeComponentDef.getGroupHostDef().sOverride = [
-			{
-				selector : ':host',
-				opacity: '0'
-		  	}
-		];
-		new App.componentTypes.LinkedTreeComponent(
-			linkedTreeComponentDef,
+		
+		new App.componentTypes.MenuBar(
+			createMenuDef(),
 			parentView,
-			parent,
-			options.linkedTreeData,
-			options.alignment
+			parent
 		);
 		
 		var pixiRendererDef = TypeManager.mockDef();
@@ -40,6 +33,8 @@ var rootViewInitializer = function(options) {
 			parentView,
 			parent
 		)
+		
+		
 	}
 		
 	return {

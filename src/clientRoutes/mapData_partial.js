@@ -3,13 +3,45 @@ module.exports = JSON.parse`{
     "topic": "La meilleure technique pour taper wisemap.ai sans lui faire mal",
     "children": [
         {
-            "id": "22ae0519-7b4a-47e4-8de3-30a327056a02",
-            "topic": "Position ergonomique du corps",
+            "id": "670fce80-e199-44f3-b3aa-5afb27083f4b",
+            "topic": "Utilisation d'un logiciel de reconnaissance vocale",
             "children": [
                 {
-                    "id": "879f2aa7-5102-449a-abd4-295a6ad96147",
-                    "topic": "Chaise ergonomique",
-                    "children": [],
+                    "id": "652694fa-0689-463f-b08e-ca21d563d934",
+                    "topic": "Utilisation des commandes indolores pour taper",
+                    "children": [
+                        {
+                            "id": "e745ea55-b87d-47e8-aae8-f43fa78197d9",
+                            "topic": "Configuration du logiciel de reconnaissance vocale",
+                            "children": [
+                                {
+                                    "id": "858982c4-f862-4b56-b45d-1f1b29d7136e",
+                                    "topic": "Param\\u00e8tres de reconnaissance vocale",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "460c0629-1c1a-4786-9126-6d00faec27a3",
+                                    "topic": "Configuration du microphone",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                }
+                            ],
+                            "extra": {
+                                "is_map_root": false
+                            },
+                            "root": false,
+                            "expanded": true
+                        }
+                    ],
                     "extra": {
                         "is_map_root": false
                     },
@@ -17,59 +49,8 @@ module.exports = JSON.parse`{
                     "expanded": true
                 },
                 {
-                    "id": "007ba51d-7812-4175-a1b9-1f622fba96d5",
-                    "topic": "Bureau ajustable en hauteur",
-                    "children": [],
-                    "extra": {
-                        "is_map_root": false
-                    },
-                    "root": false,
-                    "expanded": true
-                },
-                {
-                    "id": "c3aa252c-ed86-43c6-baea-29debae0c76f",
-                    "topic": "Coussin de soutien lombaire",
-                    "children": [],
-                    "extra": {
-                        "is_map_root": false
-                    },
-                    "root": false,
-                    "expanded": true
-                }
-            ],
-            "extra": {
-                "is_map_root": false
-            },
-            "root": false,
-            "expanded": true
-        },
-        {
-            "id": "34364d16-2bea-4363-8168-27c6ac836d9b",
-            "topic": "Position ergonomique des mains",
-            "children": [
-                {
-                    "id": "e227f3ed-e493-40d0-b117-d09df48d52a6",
-                    "topic": "Clavier ergonomique",
-                    "children": [],
-                    "extra": {
-                        "is_map_root": false
-                    },
-                    "root": false,
-                    "expanded": true
-                },
-                {
-                    "id": "31d36b82-8a94-4489-82b2-987c22c3360c",
-                    "topic": "Repose-poignet",
-                    "children": [],
-                    "extra": {
-                        "is_map_root": false
-                    },
-                    "root": false,
-                    "expanded": true
-                },
-                {
-                    "id": "c4beddbe-f193-454d-aee6-5e2ffc0c2874",
-                    "topic": "Souris ergonomique",
+                    "id": "86c6b414-9a31-48ff-923c-78f762481f81",
+                    "topic": "Correction et \\u00e9dition du texte transcrit",
                     "children": [],
                     "extra": {
                         "is_map_root": false

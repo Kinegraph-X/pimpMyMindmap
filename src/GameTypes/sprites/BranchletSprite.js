@@ -1,4 +1,5 @@
 /**
+ * @typedef {Object} PIXI.Point
  * @typedef {Object} PIXI.Texture
  * @typedef {Object} PIXI.SimpleRope
  */
@@ -21,19 +22,17 @@ const TargetPositionTween = require('src/GameTypes/tweens/TargetPositionTween');
  */
 const BranchletSprite = function(positionStart, positionMid, positionEnd, texture, isReversed = false) {
 	Sprite.call(this);
-	this.currentStep = 0;
-	this.path = [];
+	this.currentStep = 1;
+	this.path = Array();
 	this.positionStart = positionStart;
 	this.positionMid = positionMid;
 	this.positionEnd = positionEnd;
 	this.positions = this.getPositions(isReversed);
+	this.options = {
+		curveType : null
+	};
 	
-//	if (isReversed) {
-//		this.positions.forEach(function(position) {
-//			console.log(position.x.value, position.y.value)
-//		});
-//	}
-	
+	this.getPath();
 	this.spriteObj = this.getSprite(texture);
 }
 BranchletSprite.prototype = Object.create(Sprite.prototype);
@@ -48,12 +47,8 @@ BranchletSprite.prototype.objectType = 'BranchletSprite';
  * @return {PIXI.SimpleRope}
  */
 BranchletSprite.prototype.getSprite = function(texture) {
-	this.getPath();
-	this.currentStep++;
-	
-	const sprite = new PIXI.SimpleRope(texture, this.path);
-	
-	return sprite;
+	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+	return new PIXI.SimpleRope(texture, this.path);
 }
 
 /**
@@ -71,8 +66,11 @@ BranchletSprite.prototype.getNextStepForPath = function(duration = 1) {
  * @return void
  */
 BranchletSprite.prototype.getPath = function() {
+	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 	this.path.push(new PIXI.Point(this.positions[0].x.value, this.positions[0].y.value));
+	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 	this.path.push(new PIXI.Point(this.positions[0].x.value, this.positions[0].y.value));
+	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 	this.path.push(new PIXI.Point(this.positions[0].x.value, this.positions[0].y.value));
 }
 
@@ -129,50 +127,20 @@ BranchletSprite.prototype.movingUpdatePath = function(duration) {
  * @return Array<CoreTypes.Point>
  */
 BranchletSprite.prototype.getPositions = function(isReversed) {
-//	const seededOffset = Math.random() * 4 + 16;
-	
-//	if (!isReversed)
-		return [
-			new CoreTypes.Point(
-				this.positionStart.x.value,
-				this.positionStart.y.value
-			),
-			new CoreTypes.Point(
-				this.positionMid.x.value,
-				this.positionMid.y.value
-			),
-			new CoreTypes.Point(
-				this.positionEnd.x.value,
-				this.positionEnd.y.value
-			)
-		];
-//	else
-//		return [
-//			new CoreTypes.Point(
-//				this.positionStart.x.value,
-//				this.positionStart.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionStart.x.value - horizontalOffset1,
-//				this.positionStart.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionStart.x.value - horizontalOffset2,
-//				this.positionStart.y.value - verticalOffset
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value + horizontalOffset2,
-//				this.positionEnd.y.value + verticalOffset
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value + horizontalOffset1,
-//				this.positionEnd.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value,
-//				this.positionEnd.y.value
-//			)
-//		];
+	return [
+		new CoreTypes.Point(
+			this.positionStart.x.value,
+			this.positionStart.y.value
+		),
+		new CoreTypes.Point(
+			this.positionMid.x.value,
+			this.positionMid.y.value
+		),
+		new CoreTypes.Point(
+			this.positionEnd.x.value,
+			this.positionEnd.y.value
+		)
+	];
 }
 
 /**

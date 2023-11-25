@@ -10,11 +10,19 @@ const GameState = function() {
 }
 //GameState.prototype = {};
 
+/**
+ * @method setRootTimestamp
+ * @param {Number} value
+ */
 GameState.prototype.setRootTimestamp = function(value) {
 	console.log('rootTimestamp set :', value);
 	this.rootTimestamp = value;
 }
 
+/**
+ * @method setRootTimestamp
+ * @param {String} value
+ */
 GameState.prototype.setCurrentTheme = function(value) {
 	console.log('currentTheme set :', value);
 	this.currentTheme = value;

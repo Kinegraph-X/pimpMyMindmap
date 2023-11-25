@@ -2,9 +2,6 @@
  * @typedef {Object} PIXI.Sprite
  * @typedef {import('src/GameTypes/sprites/Sprite')} Sprite
  * @typedef {import('src/GameTypes/tweens/Tween')} Tween
- * @typedef {import('src/GameTypes/collisionTests/fireballCollisionTester')} FireballCollisionTester
- * @typedef {import('src/GameTypes/collisionTests/mainSpaceShipCollisionTester')} MainSpaceShipCollisionTester
- * @typedef {import('src/GameTypes/collisionTests/spaceShipCollisionTester')} SpaceShipCollisionTester
  */
 
 const {EventEmitter} = require('src/core/CoreTypes');
@@ -46,14 +43,14 @@ const GameLoop = function(windowSize) {
 	// @ts-ignore PIXI
 	this.stage = new PIXI.Container();
 	
-//	window.onresize = this.applyResize.bind(this);
+//	window.onresize = this.applyResizeToWindow.bind(this);
 }
 GameLoop.prototype = Object.create(EventEmitter.prototype);
 
 /**
  * @method checkForResize
  */
-GameLoop.prototype.applyResize = function() {
+GameLoop.prototype.applyResizeToWindow = function() {
 	let windowSizeChanged = false;
 	this.totalWindowSize = new CoreTypes.Dimension(window.innerWidth, window.innerHeight);
 	
@@ -73,6 +70,12 @@ GameLoop.prototype.applyResize = function() {
 		// @ts-ignore trigger is inherited
 		this.trigger('resize', this.windowSize);
 	}
+}
+
+GameLoop.prototype.applyResizeToContent = function() {
+	this.renderer.resize(this.windowSize.x.value, this.windowSize.y.value);
+	// @ts-ignore trigger is inherited
+	this.trigger('resize', this.windowSize);
 }
 
 /**
@@ -147,7 +150,7 @@ GameLoop.prototype.start = function() {
 					self.trigger('disposableSpriteAnimationEnded', tween);
 				}
 				
-				// FIXME: Is there a probability for a tween to be at the same time "ended" and "outOfScreen" ?
+				// TODO: Is there a probability for a tween to be at the same time "ended" and "outOfScreen" ?
 				// => removeTween() would fail on the 2nd call.
 				// In the current implem, that should not happen...
 //				if (tween.testOutOfScreen()) {
@@ -168,7 +171,7 @@ GameLoop.prototype.start = function() {
 		}
 		
 		// Collision Handling
-		self.testAndCleanCollisions.call(self);
+//		self.testAndCleanCollisions.call(self);
 		
 //		performance.measure('bench_measure', 'benchmark');
 //		let perf = performance.getEntriesByName('bench_measure')[performance.getEntriesByName('bench_measure').length - 1].duration;
@@ -232,6 +235,14 @@ GameLoop.prototype.getFrameDuration = function(duration) {
 			return this.firstFramesDuration.chosen;
 	}
 	return null;
+}
+
+/**
+ * @method clearStage
+ * 
+ */
+GameLoop.prototype.clearStage = function() {
+	this.stage.removeChildren();
 }
 
 /**
@@ -333,141 +344,141 @@ GameLoop.prototype.removeTween = function(tween) {
 	}
 }
 
-/**
- * @method pushCollisionTest
- * 
- * Self-explanatory
- * 
- * @param {FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester} test
- * 
- */
-GameLoop.prototype.pushCollisionTest = function(test) {
-	this.collisionTests.push(test);
-}
+///**
+// * @method pushCollisionTest
+// * 
+// * Self-explanatory
+// * 
+// * @param {FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester} test
+// * 
+// */
+//GameLoop.prototype.pushCollisionTest = function(test) {
+//	this.collisionTests.push(test);
+//}
 
-/**
- * @method removeCollisionTest
- * 
- * Self-explanatory
- * 
- * @param {FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester} test
- *
- */
-GameLoop.prototype.removeCollisionTest = function(test) {
-	var testPos = this.collisionTests.indexOf(test);
-	if (testPos !== -1)
-		this.collisionTests.splice(testPos, 1);
-}
+///**
+// * @method removeCollisionTest
+// * 
+// * Self-explanatory
+// * 
+// * @param {FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester} test
+// *
+// */
+//GameLoop.prototype.removeCollisionTest = function(test) {
+//	var testPos = this.collisionTests.indexOf(test);
+//	if (testPos !== -1)
+//		this.collisionTests.splice(testPos, 1);
+//}
 
-/**
- * @method removeCollisionTests
- * 
- * Self-explanatory
- * 
- * @param {Array<FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester>} tests
- *
- */
-GameLoop.prototype.removeCollisionTests = function(tests) {
-	let test;
-	for (let i = this.collisionTests.length - 1; i >= 0; i--) {
-		test = this.collisionTests[i];
-		if (tests.indexOf(test) !== -1){
-			this.collisionTests.splice(i, 1);
-		}
-	}
-}
+///**
+// * @method removeCollisionTests
+// * 
+// * Self-explanatory
+// * 
+// * @param {Array<FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester>} tests
+// *
+// */
+//GameLoop.prototype.removeCollisionTests = function(tests) {
+//	let test;
+//	for (let i = this.collisionTests.length - 1; i >= 0; i--) {
+//		test = this.collisionTests[i];
+//		if (tests.indexOf(test) !== -1){
+//			this.collisionTests.splice(i, 1);
+//		}
+//	}
+//}
 
-/**
- * @method removeCollisionTests
- * 
- * Self-explanatory
- * 
- * @param {Array<FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester>} tests
- *
- */
-GameLoop.prototype.markCollisionTestsForRemoval = function(tests) {
-	let test;
-	for (let i = this.collisionTests.length - 1; i >= 0; i--) {
-		test = this.collisionTests[i];
-		if (tests.indexOf(test) !== -1){
-			CoreTypes.clearedCollisionTests.add(i);
-		}
-	}
-}
-
-
-/**
- * @method removeAllCollisionTests
- * 
- *  * Self-explanatory
- */
-GameLoop.prototype.removeAllCollisionTests = function() {
-	this.collisionTests.length = 0;
-}
+///**
+// * @method removeCollisionTests
+// * 
+// * Self-explanatory
+// * 
+// * @param {Array<FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester>} tests
+// *
+// */
+//GameLoop.prototype.markCollisionTestsForRemoval = function(tests) {
+//	let test;
+//	for (let i = this.collisionTests.length - 1; i >= 0; i--) {
+//		test = this.collisionTests[i];
+//		if (tests.indexOf(test) !== -1){
+//			CoreTypes.clearedCollisionTests.add(i);
+//		}
+//	}
+//}
 
 
+///**
+// * @method removeAllCollisionTests
+// * 
+// *  * Self-explanatory
+// */
+//GameLoop.prototype.removeAllCollisionTests = function() {
+//	this.collisionTests.length = 0;
+//}
 
 
-/**
- * @method testAndCleanCollisions
- * 
- * A method which traverse the array of collision tests without modifying it,
- * and then updates it, removing all the tests which are not anymore relevant.
- */
-GameLoop.prototype.testAndCleanCollisions = function() {
-	// For "loot" collisionTests, or when adding more "spaceships",
-	// it could cause a bug if we were adding the tests synchronously to the loop
-	// while the collisionTests loop is running.
-	// So, we add them on the next frame.
-	// (Even true if we add them to a registry, so always add new foes as the last step of the event handling) 
-	Array.prototype.push.apply(this.collisionTests, CoreTypes.tempAsyncCollisionsTests);
-	CoreTypes.tempAsyncCollisionsTests.length = 0;
-	
-	/** @type {FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester} */
-	let collisionTest,
-		deletedTests = new Uint8Array(this.collisionTests.length),
-		clearedTests = CoreTypes.clearedCollisionTests;
-	
-	for (let i = this.collisionTests.length - 1; i >= 0; i--) {
-				
-		if (deletedTests.at(i) === 1 || this.gameOver)
-			continue;
-		
-		collisionTest = this.collisionTests[i];
-		
-		if (collisionTest.testCollision()) {
-			// @ts-ignore objectType: implicit inheritance
-			if (collisionTest.objectType === this.collisionTestNamesConstants.fireballCollisionTest) {
-				ruleSet.foeSpaceShipTestCollision.forEach(function(rule) {
-					if (rule.targetObjectType === collisionTest.referenceObj.objectType) {
-						// @ts-ignore implicit inheritance
-						this[rule.action](rule.params[0], [collisionTest[rule.params[1]], collisionTest[rule.params[2]]]);
-						// @ts-ignore implicit inheritance
-						this.cleanCollisionTests(collisionTest[rule.params[1]], collisionTest[rule.params[2]], deletedTests, clearedTests);
-					}
-				}, this);
-			}
-			// @ts-ignore objectType: implicit inheritance
-			else if (collisionTest.objectType === this.collisionTestNamesConstants.mainSpaceShipCollisionTest) {
-				ruleSet.mainSpaceShipTestCollision.forEach(function(rule) {
-					// @ts-ignore type: implicit inheritance
-					if (collisionTest.type === rule.type) {
-						// @ts-ignore implicit inheritance
-						this[rule.action](rule.params[0], [collisionTest[rule.params[1]], collisionTest[rule.params[2]]]);
-						// @ts-ignore implicit inheritance
-						this.cleanCollisionTests(collisionTest[rule.params[1]], collisionTest[rule.params[2]], deletedTests, clearedTests);
-					}
-				}, this);
-			}
-			this.updateDeletedTests(deletedTests, clearedTests);
-		}
-	}
-	
-	if (deletedTests.byteLength)		// weird case where we have no colisionTests in the loop yet, but already marked tests in clearedTests => wait for the next call
-		this.effectivelySpliceDeletedTests(clearedTests);
-	
-	clearedTests.clear();
-}
+
+
+///**
+// * @method testAndCleanCollisions
+// * 
+// * A method which traverse the array of collision tests without modifying it,
+// * and then updates it, removing all the tests which are not anymore relevant.
+// */
+//GameLoop.prototype.testAndCleanCollisions = function() {
+//	// For "loot" collisionTests, or when adding more "spaceships",
+//	// it could cause a bug if we were adding the tests synchronously to the loop
+//	// while the collisionTests loop is running.
+//	// So, we add them on the next frame.
+//	// (Even true if we add them to a registry, so always add new foes as the last step of the event handling) 
+//	Array.prototype.push.apply(this.collisionTests, CoreTypes.tempAsyncCollisionsTests);
+//	CoreTypes.tempAsyncCollisionsTests.length = 0;
+//	
+//	/** @type {FireballCollisionTester|SpaceShipCollisionTester|MainSpaceShipCollisionTester} */
+//	let collisionTest,
+//		deletedTests = new Uint8Array(this.collisionTests.length),
+//		clearedTests = CoreTypes.clearedCollisionTests;
+//	
+//	for (let i = this.collisionTests.length - 1; i >= 0; i--) {
+//				
+//		if (deletedTests.at(i) === 1 || this.gameOver)
+//			continue;
+//		
+//		collisionTest = this.collisionTests[i];
+//		
+//		if (collisionTest.testCollision()) {
+//			// @ts-ignore objectType: implicit inheritance
+//			if (collisionTest.objectType === this.collisionTestNamesConstants.fireballCollisionTest) {
+//				ruleSet.foeSpaceShipTestCollision.forEach(function(rule) {
+//					if (rule.targetObjectType === collisionTest.referenceObj.objectType) {
+//						// @ts-ignore implicit inheritance
+//						this[rule.action](rule.params[0], [collisionTest[rule.params[1]], collisionTest[rule.params[2]]]);
+//						// @ts-ignore implicit inheritance
+//						this.cleanCollisionTests(collisionTest[rule.params[1]], collisionTest[rule.params[2]], deletedTests, clearedTests);
+//					}
+//				}, this);
+//			}
+//			// @ts-ignore objectType: implicit inheritance
+//			else if (collisionTest.objectType === this.collisionTestNamesConstants.mainSpaceShipCollisionTest) {
+//				ruleSet.mainSpaceShipTestCollision.forEach(function(rule) {
+//					// @ts-ignore type: implicit inheritance
+//					if (collisionTest.type === rule.type) {
+//						// @ts-ignore implicit inheritance
+//						this[rule.action](rule.params[0], [collisionTest[rule.params[1]], collisionTest[rule.params[2]]]);
+//						// @ts-ignore implicit inheritance
+//						this.cleanCollisionTests(collisionTest[rule.params[1]], collisionTest[rule.params[2]], deletedTests, clearedTests);
+//					}
+//				}, this);
+//			}
+//			this.updateDeletedTests(deletedTests, clearedTests);
+//		}
+//	}
+//	
+//	if (deletedTests.byteLength)		// weird case where we have no colisionTests in the loop yet, but already marked tests in clearedTests => wait for the next call
+//		this.effectivelySpliceDeletedTests(clearedTests);
+//	
+//	clearedTests.clear();
+//}
 
 /**
  * @method cleanCollisionTests

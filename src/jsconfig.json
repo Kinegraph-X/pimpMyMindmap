@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+	"baseUrl": "../",
+	"typeRoots": ["../../../node_modules/@types"],
+    "module": "commonjs",
+    "checkJs" : true,
+    "paths": {
+		"src/core/*": ["../jsCore/src/core/*"],
+		"src/_LayoutEngine/*": ["../jsCore/src/_LayoutEngine/*"],
+		"src/integrated_libs_&_forks/*": ["../jsCore/src/integrated_libs_&_forks/*"],
+		"src/events/*": ["../jsKeyboardEvents/src/events/*"]
+	},
+	"lib" : ["es2022", "dom"],
+    "noImplicitAny": true
+  }
+ }

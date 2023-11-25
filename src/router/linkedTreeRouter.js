@@ -3,16 +3,17 @@
  */
 
 const FontFaceObserver = require('src/integrated_libs_&_forks/fontfaceobserver');
-const KeyboardEvents = require('src/events/JSKeyboardMap');
-const KeyboardListener = require('src/events/GameKeyboardListener');
+
 const App = require('src/core/AppIgnition');
 const TypeManager = require('src/core/TypeManager');
-const StylesheetsCollector = require('src/_LayoutEngine/StylesheetsCollector');
+var APIendpointsManager = require('src/core/APIendpointsManager');
+
+
 const ComputedStyleSolver = require('src/_LayoutEngine/ComputedStyleSolver');
 const LayoutTreePrepare = require('src/_LayoutEngine/LayoutTreePrepare');
 
-const linkedTreeInitializer = require('src/clientRoutes/linkedTreeInitializer');
-const linkedTreeData = require('src/clientRoutes/mapData');	// _partial
+
+
 
 const PlantCreator = require('src/router/PlantCreator');
 
@@ -27,236 +28,323 @@ const CoreTypes = require('src/GameTypes/gameSingletons/CoreTypes');
 const {themeDescriptors} = require('src/GameTypes/gameSingletons/gameConstants');
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
-//const gameLogic = require('src/GameTypes/gameSingletons/gameLogic');
 
-//const GameObjectsFactory = require('src/GameTypes/factories/GameObjectsFactory');
-// // Singleton init
-//GameObjectsFactory();
-
-//const Sprite = require('src/GameTypes/sprites/Sprite');
-//const TilingSprite = require('src/GameTypes/sprites/TilingSprite');
-//const Tween = require('src/GameTypes/tweens/Tween');
+const GlobalHandler = require('src/helpers/GlobalHandler');
 
 const BgSprite = require('src/GameTypes/sprites/BgSprite');
 
 var classConstructor = function() {	
-
-	function init(rootNodeSelector, mapData, theme) {
-//		let alignment = 'centerAligned';
-		let alignment = 'leftAligned';
-		GameState().setCurrentTheme(theme || 'midi') 	// 80s
-		let parsedMapData = JSON.parse(map_data.textContent);
-
-		if (parsedMapData.error) {
-			console.warn('No data returned by proxy :', parsedMapData.error);
-			parsedMapData = linkedTreeData;
-		}
-			
-		const keyboardListener = new KeyboardListener();
-		const rootBoundingRect = document.body.getBoundingClientRect();
-		const linkedTreeInstance = new App.RootView(
-			linkedTreeInitializer(
-				{
-					linkedTreeData : parsedMapData,
-					alignment : alignment
-				}
-			),
-			null,
-			'noAppend'
-		);
-		
-		(new FontFaceObserver('roboto'))
-			.load().then(function() {
-				const renderFunc = function() {
-				
-					// Prepare for a potential browser-scrollbar if the canva's height is greater than the window's height
-					rootBoundingRect.width -= 21;
-					
-					const naiveDOM = linkedTreeInstance._children[0].getNaiveDOM();
-					const stylesheetsCollector = new StylesheetsCollector();
-					const styleSolver = new ComputedStyleSolver(
-						naiveDOM,
-						stylesheetsCollector.collectedSWrappers
-					);
-					styleSolver.CSSSelectorsMatcher.traverseDOMAndMatchSelectors(
-						naiveDOM,
-						styleSolver.CSSRulesBuffer
-					);
-					
-					styleSolver.CSSSelectorsMatcher.matches.results = styleSolver.CSSSelectorsMatcherRefiner.refineMatches(
-						styleSolver.CSSSelectorsMatcher.matches,
-						// HACK: naiveDOMRegistry & masterStyleRegistry
-						// would have been needed if we had gotten the naiveDOM from an outer IFrame
-						TypeManager.naiveDOMRegistry,
-						TypeManager.masterStyleRegistry
-					);
-					
-					
-						performance.mark('totalRendering');
-					const layoutRes = new LayoutTreePrepare(
-						naiveDOM,
-						stylesheetsCollector.collectedSWrappers,
-						TypeManager.masterStyleRegistry,
-						rootBoundingRect,
-						TypeManager.naiveDOMRegistry
-					);
-					performance.measure('bench_total_rendering', 'totalRendering');
-					console.log('layout', performance.getEntriesByName('bench_total_rendering')[performance.getEntriesByName('bench_total_rendering').length - 1].duration + ' ms');
-					
-					
-					const nodesCache = TypeManager.layoutNodesRegistry.cache;
-					for (var UID in nodesCache) {
-						nodesCache[UID].canvasShape = nodesCache[UID].getCanvasShape();
-						nodesCache[UID].updateCanvasShapeDimensions();
-						nodesCache[UID].updateCanvasShapeOffsets();
-					}
-					
-					const  pixiRendererComponent = linkedTreeInstance._children[1];
-					pixiRendererComponent.adaptHeightToContainer(layoutRes.finalViewportHeight);
-					pixiRendererComponent.createAndPopulateStage(TypeManager.rasterShapesRegistry.cache);
-					
-					// GAME LAUNCH
-					// Singleton init
-					GameLoop(new CoreTypes.Point(
-						layoutRes.finalViewportWidth,
-						layoutRes.finalViewportHeight
-					));
-					
-					// Get a usable representation of the tree
-					const layoutTreeAsBreadthFirst = representLayoutTreeAsBreadthFirst(Object.values(TypeManager.layoutNodesRegistry.cache));
-					
-					// Append the view centered
-					document.querySelector(rootNodeSelector).prepend(GameLoop().renderer.view);
-					centerCanvas(
-						{
-							x : layoutRes.finalViewportWidth,
-							y : layoutRes.finalViewportHeight
-						},
-						GameLoop().renderer.view,
-						layoutTreeAsBreadthFirst['2'][1]
-					);
-					
-					// Hacky Title
-//					const xBase = layoutTreeAsBreadthFirst['2'][1].layoutAlgo.offsets.getMarginInline();
-//					const yBase = layoutTreeAsBreadthFirst['2'][1].layoutAlgo.offsets.getMarginBlock() - 437
-//					const logo = PIXI.Sprite.from(loadedAssets[4].logo);
-//					logo.x = xBase - 264;
-//					logo.y = yBase + 43;
-//					logo.alpha = .7;
-//					GameLoop().stage.addChild(
-//						logo
-//					)
-//					const titleTextSprite01 = new PIXI.Text(
-//						'Wisemap',
-//						{
-//							fontSize: 32,
-//							fill: '0x444444C9'
-//						}
-//					);
-//					titleTextSprite01.x = xBase - 351;
-//					titleTextSprite01.y = yBase + 45;
-//					GameLoop().stage.addChild(
-//						titleTextSprite01
-//					);
-//					const titleTextSprite02 = new PIXI.Text(
-//						'Naturizer',
-//						{
-//							fontSize: 32,
-//							fill: '0x2b6e01E9'
-//						}
-//					);
-//					titleTextSprite02.x = xBase - 351;
-//					titleTextSprite02.y = yBase + 67;
-//					GameLoop().stage.addChild(
-//						titleTextSprite02
-//					)
-					
-					// Background
-					const bgSprite = new BgSprite(loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + 'themeBg']);
-					bgSprite.centerOnCanvas(
-						new CoreTypes.Point(
-							layoutRes.finalViewportWidth,
-							layoutRes.finalViewportHeight
-						)
-					);
-					GameLoop().addSpriteToScene(
-						bgSprite
-					);
-					
-					// Create Plants
-					new PlantCreator(layoutTreeAsBreadthFirst, theme);
-					
-					// Launch
-					GameLoop().start();
-					setTimeout(GameLoop().stop.bind(GameLoop()), 180 * 1000);
-					
-					performance.mark('PIXI Rendering');
-//					pixiRendererComponent.renderStage();
-					performance.measure('bench_pixi_rendering', 'PIXI Rendering');
-					console.log('debug rendering', performance.getEntriesByName('bench_pixi_rendering')[performance.getEntriesByName('bench_pixi_rendering').length - 1].duration + ' ms');
-					console.info('Ctrl + Q to leave the render-loop before the 3 min timeout');
-					layoutRes.finallyCleanLayoutTree();
-					
-					setTimeout(function() {
-						GameState().setRootTimestamp(GameLoop().currentTime);
-					}, 4096);
-				}
-				
-				AssetsLoader.then(function(loadedAssets) {
-					keyboardListener.addOnReleasedListener(function(originalEvent, ctrlKey, shiftKey, altKey, keyCode) {
-						if (keyCode === KeyboardEvents.indexOf('Q') && ctrlKey) {
-							GameLoop().stop();
-						}
-						if (keyCode === KeyboardEvents.indexOf('SPACE')) {
-							GameState().setRootTimestamp(GameLoop().currentTime);
-						}
-					});
-					renderFunc();
-				});
-		})
-	}
 	
-	function representLayoutTreeAsBreadthFirst(layoutNodes) {
-		const levels = {};
-		let depth = '';
+	/**
+	 * @param {String} rootNodeSelector
+	 */
+	function init(rootNodeSelector) {
+		/*
+		 * globalHandler
+		 * 	^ mapData
+		 * 	^ instances of all helpers
+		 * 	-> subscribes to events from APIHelper
+		 *  -> subscribes to events from componentHelper
+		 * 	getLoadingSpinner
+		 * 	startLoadingSpinner
+		 * 	stopLoadingSpinner
+		 * 	handleNewMapData
+		 * 	handleNewTheme
+		 * 
+		 * glHelper
+		 *	initLoop
+		 * 	delayGameLoopStart
+		 * 	prepareAutoLoopEnd
+		 * 	abortAutoLoopEnd
+		 * 
+		 * componentHelper
+		 * 	^ events [newLayoutReady, mapChanged, themeChanged]
+		 * 	createRootComponent
+		 * 	createMapComponent
+		 * 	resetMapCompoent
+		 * 	createMapSelectorComponent
+		 * 	createThemeSelectorComponent
+		 * 
+		 * APIHelper
+		 * 	^ URLprefix
+		 * 	^ events [newMapData]
+		 * 	initEndpoints
+		 *  getMapData
+		 */
 		
-		layoutNodes.forEach(function(layoutNode) {
-			if (typeof layoutNode.depth === 'undefined')
-				return;
-			
-			depth = layoutNode.depth.toString();
-			if (typeof levels[layoutNode.depth] === 'undefined')
-				levels[depth] = [];
-				
-			levels[depth].push(layoutNode);
+		// WAIT FOR THE FONT & LAUNCH !!!!!!!!!!! RASTER RENDERING
+		(new FontFaceObserver('roboto')).load().then(function() {
+			AssetsLoader.then(function() {
+				new GlobalHandler(
+					rootNodeSelector,
+					document.querySelector('#map_data').textContent
+				)
+			});
 		});
-		
-		return levels;
 	}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+//		// FIRST INIT WITH DEFAULT DATA
+//		const linkedTreeInstance
+//		
+//		// INIT SELECTORS FOR MAP_ID & THEME
+//		var mapListSelector = linkedTreeInstance._children[0]._children[1],
+//			themeListSelector = linkedTreeInstance._children[0]._children[2];
+//		multiSourceProvider.agnosticSubscribeToEndPoint('list_maps/', mapListSelector);
+//		multiSourceProvider.acquireAsync();
+//		hackyThemeSelectorDecorator(themeListSelector);
+//		hookLoadMapEventOnMapsSelector(mapListSelector, linkedTreeInstance, rootBoundingRect, rootNodeSelector, theme, alignment, prefix);
+		
+		
+		
 	
-	function centerCanvas(canvasDimensions, canvas, rootNode) {
-		let zoomFactor = 1, centeringOffsetX = 0, centeringOffsetY = 0;
-//		const xOffset = canvasDimensions.x / 2 - (rootNode.layoutAlgo.offsets.getMarginInline() + rootNode.layoutAlgo.dimensions.getBorderInline() / 2);
-//		const yOffset = canvasDimensions.y / 2 - (rootNode.layoutAlgo.offsets.getMarginBlock() + rootNode.layoutAlgo.dimensions.getBorderBlock() / 2);
-		
-		if (canvasDimensions.x - windowSize.x.value > canvasDimensions.y - windowSize.y.value) {
-			zoomFactor = windowSize.x.value / canvasDimensions.x;
-			centeringOffsetY = (windowSize.y.value - canvasDimensions.y * zoomFactor) / 2;
-		}
-		else {
-			zoomFactor = windowSize.y.value / canvasDimensions.y;
-			centeringOffsetX = (windowSize.x.value - canvasDimensions.x * zoomFactor) / 2;
-		}
-		
-		canvas.style.transform = `scale(${zoomFactor}, ${zoomFactor})`; //  translateX(${-canvasDimensions.x * zoomFactor / 2}px)
-		canvas.style.marginLeft = '-' + (canvasDimensions.x * (1 - zoomFactor) / 2 - centeringOffsetX).toString() + 'px';
-		canvas.style.marginTop = '-' + (canvasDimensions.y * (1 - zoomFactor) / 2 - centeringOffsetY).toString() + 'px';
-		
-//		document.body.scroll(
-//			(canvasDimensions.x * zoomFactor / 2 - windowSize.x.value) / 2 - xOffset,
-//			(canvasDimensions.y * zoomFactor / 2 - windowSize.y.value) / 2 - yOffset
+//	function representLayoutTreeAsBreadthFirst(layoutNodes) {
+//		const levels = {};
+//		let depth = '';
+//		layoutNodes.forEach(function(layoutNode) {
+//			if (typeof layoutNode.depth === 'undefined')
+//				return;
+//			
+//			depth = layoutNode.depth.toString();
+//			if (typeof levels[layoutNode.depth] === 'undefined')
+//				levels[depth] = [];
+//				
+//			levels[depth].push(layoutNode);
+//		});
+//		return levels;
+//	}
+//	
+//	function centerCanvas(canvasDimensions, canvas) {
+//		let zoomFactor = 1, centeringOffsetX = 0, centeringOffsetY = 0;
+////		const xOffset = canvasDimensions.x / 2 - (rootNode.layoutAlgo.offsets.getMarginInline() + rootNode.layoutAlgo.dimensions.getBorderInline() / 2);
+////		const yOffset = canvasDimensions.y / 2 - (rootNode.layoutAlgo.offsets.getMarginBlock() + rootNode.layoutAlgo.dimensions.getBorderBlock() / 2);
+//		
+//		if (canvasDimensions.x - windowSize.x.value > canvasDimensions.y - windowSize.y.value) {
+//			zoomFactor = windowSize.x.value / canvasDimensions.x;
+//			centeringOffsetY = (windowSize.y.value - canvasDimensions.y * zoomFactor) / 2;
+//		}
+//		else {
+//			zoomFactor = windowSize.y.value / canvasDimensions.y;
+//			centeringOffsetX = (windowSize.x.value - canvasDimensions.x * zoomFactor) / 2;
+//		}
+//		
+//		canvas.style.transform = `scale(${zoomFactor}, ${zoomFactor})`; //  translateX(${-canvasDimensions.x * zoomFactor / 2}px)
+//		canvas.style.marginLeft = '-' + (canvasDimensions.x * (1 - zoomFactor) / 2 - centeringOffsetX).toString() + 'px';
+//		canvas.style.marginTop = '-' + (canvasDimensions.y * (1 - zoomFactor) / 2 - centeringOffsetY).toString() + 'px';
+//		
+////		document.body.scroll(
+////			(canvasDimensions.x * zoomFactor / 2 - windowSize.x.value) / 2 - xOffset,
+////			(canvasDimensions.y * zoomFactor / 2 - windowSize.y.value) / 2 - yOffset
+////		);
+//	}
+//	
+//	/**
+//	 * @method getMapDataFromAPI
+//	 * @param {String} prefix
+//	 * @param {String} mapId
+//	 */
+//	async function getMapDataFromAPI(prefix, mapId) {
+//		var body = new FormData();
+//		body.set('map_id', mapId);
+//		
+//		var options = {
+//			method : 'POST',
+//			body : body
+//		}
+//		var url = prefix + 'get_map/',
+//			result = '';
+//		await fetch(url, options).then(async function(response) {
+//			await response.text().then(function(responseObj) {
+//				result = JSON.parse(responseObj);
+//			})
+//		});
+//		return result;
+//	}
+//	
+//	/**
+//	 * @method resetMap
+//	 * @param {App.ComponentTypes.LinkedTreeComponent} linkedTreeInstance
+//	 * @param {Object} mapData
+//	 * @param {String} alignment
+//	 */
+//	function resetMap(linkedTreeInstance, mapData, alignment) {
+//		var linkedTreeComponentDef = TypeManager.mockGroupDef();
+//		linkedTreeComponentDef.getGroupHostDef().sOverride = [
+//			{
+//				selector : ':host',
+//				opacity: '0'
+//		  	}
+//		];
+//		linkedTreeInstance.removeChildAt(1);
+//		var newMap = new App.componentTypes.LinkedTreeComponent(
+//			linkedTreeComponentDef,
+//			linkedTreeInstance.view,
+//			null,
+//			mapData,
+//			alignment
 //		);
-	}
+//		linkedTreeInstance.addChildAt(newMap, 1);
+//		
+//	}
+//	
+//	/**
+//	 * @method initializeMap
+//	 */
+//	function initializeMap(linkedTreeInstance, rootBoundingRect, rootNodeSelector, theme) {
+//		
+//		
+//		const naiveDOM = linkedTreeInstance._children[1].getNaiveDOM();
+//		
+//		const styleSolver = new ComputedStyleSolver(
+//			naiveDOM,
+//			stylesheetsCollector.collectedSWrappers
+//		);
+//		styleSolver.CSSSelectorsMatcher.traverseDOMAndMatchSelectors(
+//			naiveDOM,
+//			styleSolver.CSSRulesBuffer
+//		);
+//		
+//		styleSolver.CSSSelectorsMatcher.matches.results = styleSolver.CSSSelectorsMatcherRefiner.refineMatches(
+//			styleSolver.CSSSelectorsMatcher.matches,
+//			// HACK: naiveDOMRegistry & masterStyleRegistry
+//			// would have been needed if we had gotten the naiveDOM from an outer IFrame
+//			TypeManager.naiveDOMRegistry,
+//			TypeManager.masterStyleRegistry
+//		);
+//		
+//		
+//		performance.mark('totalRendering');
+//		const layoutRes = new LayoutTreePrepare(
+//			naiveDOM,
+//			stylesheetsCollector.collectedSWrappers,
+//			TypeManager.masterStyleRegistry,
+//			rootBoundingRect,
+//			TypeManager.naiveDOMRegistry
+//		);
+//		performance.measure('bench_total_rendering', 'totalRendering');
+//		console.log('layout', performance.getEntriesByName('bench_total_rendering')[performance.getEntriesByName('bench_total_rendering').length - 1].duration + ' ms');
+//		
+//		const nodesCache = TypeManager.layoutNodesRegistry.cache;
+//		for (var UID in nodesCache) {
+//			nodesCache[UID].canvasShape = nodesCache[UID].getCanvasShape();
+//			nodesCache[UID].updateCanvasShapeDimensions();
+//			nodesCache[UID].updateCanvasShapeOffsets();
+//		}
+//		
+//		const pixiRendererComponent = linkedTreeInstance._children[2];
+//		pixiRendererComponent.adaptHeightToContainer(layoutRes.finalViewportHeight, layoutRes.finalViewportWidth);
+////		pixiRendererComponent.createAndPopulateStage(TypeManager.rasterShapesRegistry.cache);
+//		pixiRendererComponent.view.getMasterNode().style.display = 'none';
+//		
+//		
+//		// GAME LAUNCH
+//		// Singleton init
+//		GameLoop().windowSize = new CoreTypes.Point(
+//			layoutRes.finalViewportWidth,
+//			layoutRes.finalViewportHeight
+//		);
+//		GameLoop().applyResize();
+//		
+//		// Get a usable representation of the tree
+//		const layoutTreeAsBreadthFirst = representLayoutTreeAsBreadthFirst(Object.values(TypeManager.layoutNodesRegistry.cache));
+//		
+//		// Append the view centered
+//		document.querySelector(rootNodeSelector).prepend(GameLoop().renderer.view);
+//		centerCanvas(
+//			{
+//				x : layoutRes.finalViewportWidth,
+//				y : layoutRes.finalViewportHeight
+//			},
+//			GameLoop().renderer.view
+//		);
+//		
+//		
+//		
+//		// Create Plants
+//		new PlantCreator(layoutTreeAsBreadthFirst);
+//		
+//		// Launch
+//		GameLoop().start();
+//		clearTimeout(globalTimeout);
+//		globalTimeout = setTimeout(GameLoop().stop.bind(GameLoop()), 180 * 1000);
+//		
+//		performance.mark('PIXI Rendering');
+////					pixiRendererComponent.renderStage();
+//		performance.measure('bench_pixi_rendering', 'PIXI Rendering');
+//		console.log('debug rendering', performance.getEntriesByName('bench_pixi_rendering')[performance.getEntriesByName('bench_pixi_rendering').length - 1].duration + ' ms');
+//		console.info('Ctrl + Q to leave the render-loop before the 3 min timeout');
+//		layoutRes.finallyCleanLayoutTree();
+//		
+//		setTimeout(function() {
+//			GameState().setRootTimestamp(GameLoop().currentTime);
+//		}, 4096);
+//	}
+//	
+//	/**
+//	 * @method hackyThemeSelectorDecorator
+//	 */
+//	function hackyThemeSelectorDecorator(themeListSelector) {
+//		// HACKY theme selector populate
+//		const thunbnailPath = 'plugins/LinkedTree/assets/thumbnails/',
+//			thumbnailExt = '.jpg';
+//		/** @type {HTMLImageElement} */
+//		let img,
+//		/** @type {HTMLSpanElement} */
+//			span,
+//		/** @type {HTMLOptionElement} */
+//			opt,
+//			i = 1;
+//		for(let themeName in themeDescriptors) {
+//			themeListSelector.typedSlots[0].push(themeListSelector.typedSlots[0].newItem(themeName));
+//			
+////			themeListSelector._children[0]._children[i].addEventListener('update', function(e) {
+////				console.log(e)
+////			});
+//			span = document.createElement('span');
+//			span.textContent = themeName;
+//			opt = themeListSelector._children[0]._children[i].view.getMasterNode();
+//			opt.textContent = '';
+//			opt.appendChild(span);
+//			
+//			img = document.createElement('img');
+//			img.src = thunbnailPath + themeName + thumbnailExt;
+//			img.onload = function(idx, optElem, e) {
+//				optElem.prepend(e.target);	
+//			}.bind(null, i, opt)
+//			i++;
+//		}
+//	}
+//	
+//	/**
+//	 * @method hookLoadMapEventOnMapsSelector
+//	 */
+//	function hookLoadMapEventOnMapsSelector(mapListSelector, linkedTreeInstance, rootBoundingRect, rootNodeSelector, theme, alignment, prefix) {
+//		var mapData = '';
+//		mapListSelector.addEventListener('update', function(e) {
+//			var key = e.data.selfKey;
+//			if (key === 0)
+//				return;
+//			else {
+//				GameLoop().stop();
+//				var clickedNode = mapListSelector._children[0]._children[key].view.getMasterNode();
+//				mapData = getMapDataFromAPI(prefix, clickedNode.id);
+//				
+//				resetMap(linkedTreeInstance, mapData, alignment);
+//				initializeMap(linkedTreeInstance, rootBoundingRect, rootNodeSelector, theme);
+//			}
+//		});
+//	}
+	
+	
+	
 	
 	return {
 		init : init

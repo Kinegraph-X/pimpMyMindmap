@@ -5,8 +5,6 @@
 /**
  * @typedef {import('src/GameTypes/sprites/Sprite')} Sprite
  * @typedef {import('src/GameTypes/tweens/Tween')} Tween
- * @typedef {import('src/GameTypes/collisionTests/mainSpaceShipCollisionTester')} mainSpaceShipCollisionTester
- * @typedef {import('src/GameTypes/collisionTests/fireBallCollisionTester')} fireBallCollisionTester
  */
 
 var PropertyCache = require('src/core/PropertyCache').ObjectCache;
@@ -50,10 +48,10 @@ for (var op in Operations) {
  * @param {Number} y
  * @param {Number} z
  */
-const Simple3DPoint = function(x, y, z) {
+const Simple3DPoint = function(x, y, z = 0) {
 	this.x = x || 0;
 	this.y = y || 0;
-	this.z = z || 0;
+	this.z = z;
 }
 
 
@@ -133,7 +131,6 @@ const typeNames = {
  * @typedef {Array<Tween>} CoreTypes.fireballsTweensRegister
  * @typedef {Array<Sprite>} CoreTypes.disposableSpritesRegister
  * @typedef {Array<Tween>} CoreTypes.disposableTweensRegister
- * @typedef {Array<mainSpaceShipCollisionTester|fireBallCollisionTester>} CoreTypes.tempAsyncCollisionsTests
  * 
  * @typedef {Coord} CoreTypes.Coord
  * @typedef {Point} CoreTypes.Point

@@ -1,15 +1,20 @@
-
+/**
+ * @typedef {import('src/GameTypes/Sprites/BranchSprite')} BranchSprite
+ * @typedef {import('src/GameTypes/Sprites/LeafSprite')} LeafSprite
+ * @typedef {import('src/GameTypes/Sprites/BranchletSprite')} BranchletSprite
+ */
 const GameState = require('src/GameTypes/gameSingletons/GameState');
+const {curveTypes} = require('src/GameTypes/gameSingletons/gameConstants');
 const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
 
 
 /**
  * @constructor DelayedCooledDownWeightedRecurringCallbackTween
- * @param {() => Void} cb
+ * @param {BranchSprite|LeafSprite|BranchletSprite} target
+ * @param {String} cbName
  * @param {Number} interval
- * @param {Array<Object>} argsAsArray
- * @param {Object|null} scope
- * @param {String} propName
+ * @param {Number} iterationCount
+ * @param {Number} offsetFromRootTimestamp
  */
 const DelayedCooledDownWeightedRecurringCallbackTween = function(target, cbName, interval, iterationCount, offsetFromRootTimestamp) {
 	DelayedTween.call(this, target, undefined, undefined, undefined, offsetFromRootTimestamp);
@@ -17,18 +22,25 @@ const DelayedCooledDownWeightedRecurringCallbackTween = function(target, cbName,
 	this.interval = interval;
 	this.iterationCount = iterationCount;
 	this.currentIteration = 0;
-	this.weights = [];
+	this.weights = Array();
 	
-	// TODO: get rid of these hard-coded weights, find a loop to give a heavier weight to the central points
-	if (iterationCount === 2)
-		this.weights = [0, 2/3, 4/3];
-	else if (iterationCount === 3)
-		this.weights = [0, 4/3, 2/3, 3/3];
-	else if (iterationCount === 4)
-		this.weights = [0, 1/3, 20/6, 1/6, 1/6];
+	this.debugDuration = 0;
+	this.debugStarted = false;
+	this.debugStartTime = 0;
+	
+	this.weights.push(0);
+	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
+	if (this.target.options.curveType === curveTypes.quadCurve) {
+		const halfCurve = Math.floor(iterationCount / 2);
+		for (let i = 1, l = halfCurve; i < l; i++) {
+			this.weights.push(1.9);
+		}
+		for (let i = halfCurve, l = iterationCount; i < l; i++) {
+			this.weights.push(.1);
+		}
+	}
 	else {
-		this.weights.push(0);
-		for (let i = 0, l = iterationCount; i < l; i++) {
+		for (let i = 1, l = iterationCount; i <= l; i++) {
 			this.weights.push(1);
 		}
 	}
@@ -48,25 +60,40 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.objectType = 'DelayedC
  */
 DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
 	this.lastStepTimestamp = timestamp;
+	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 	if (timestamp < GameState().rootTimestamp + this.offsetFromRootTimestamp) {
 		return;
 	}
 	
+//	if (!this.debugStarted) {
+//		this.debugStartTime = (timestamp - GameState().rootTimestamp) / this.baseFrameDuration;
+//		console.log('started', this.debugStartTime);
+//		this.debugStarted = true;
+//	}
+	
+	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 	stepCount *= frameDuration / this.baseFrameDuration;
 	this.currentPartialStep += stepCount;
 	
-	if (this.currentPartialStep < this.interval * this.weights[this.currentIteration]) {
+	if (this.currentPartialStep < this.interval * this.weights[this.currentIteration]) {	//  
 		return;
 	}
 	else {
-		if (this.currentIteration >= this.iterationCount - 1) {
-			this.ended = true;
-		}
-		this.currentPartialStep = 0;
+//		this.debugDuration += this.interval * this.weights[this.currentIteration];
+
+		this.currentPartialStep =  Math.round(this.currentPartialStep - this.interval * this.weights[this.currentIteration]); // Math.floor();	// anticipate accumulating error if we reset the partialStep on a long frame
+//		console.log(this.currentPartialStep)
 		this.currentIteration++;
+		if (this.currentIteration === this.iterationCount - 1) {
+//			if (this.target.objectType === 'BranchSprite') {
+//				console.log(this.offsetFromRootTimestamp / this.baseFrameDuration, this.debugDuration + this.currentPartialStep - this.interval * this.weights[this.currentIteration], (timestamp - GameState().rootTimestamp) / this.baseFrameDuration - this.debugStartTime);
+//			}
+			this.ended = true;
+//			return;
+		}
 	}
-	
-	return this.target[this.cbName].call(this.target, Math.max(2, this.interval * this.weights[this.currentIteration]));
+	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
+	return this.target[this.cbName].call(this.target, Math.max(2, this.interval * this.weights[this.currentIteration]));	//  
 }
 
 /**
@@ -74,6 +101,16 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
  */
 DelayedCooledDownWeightedRecurringCallbackTween.prototype.testOutOfScreen = function() {
 	return false;
+}
+
+/**
+ * @method updateAverageWeights
+ * @param {Array<Number>} refWeights
+ */
+DelayedCooledDownWeightedRecurringCallbackTween.prototype.updateWeights = function(refWeights) {
+	refWeights.forEach(function(weight, key) {
+		this.weights[key] = weight;
+	}, this)
 }
 
 

@@ -1,24 +1,24 @@
 /**
  * @typedef {Object} PIXI.Texture
  * @typedef {Object} PIXI.SimpleRope
+ * @typedef {import('src/GameTypes/gameSingletons/AppTypes').BranchOptions} BranchOptions
  */
 
 const AssetsLoader = require('src/GameTypes/gameSingletons/AssetsLoader');
-/** @type {Array<Object>} */
+/** @type {Array<{[key:String] : PIXI.Texture}>} */
 let loadedAssets = null;
 AssetsLoader.then(function(loadedBundles) {
 	loadedAssets = loadedBundles;
 });
 
 const CoreTypes = require('src/GameTypes/gameSingletons/CoreTypes');
-const {themeDescriptors} = require('src/GameTypes/gameSingletons/gameConstants');
+const {themeDescriptors, defaultInterpolationStepCount, branchletAnimationSteps, curveTypes} = require('src/GameTypes/gameSingletons/gameConstants');
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
 const Sprite = require('src/GameTypes/sprites/Sprite');
 const BranchletSprite = require('src/GameTypes/sprites/BranchletSprite');
 const TargetPositionTween = require('src/GameTypes/tweens/TargetPositionTween');
 
-const CubicSpline = require('src/GameTypes/splines/CubicSpline');
 const {Bezier} = require('src/GameTypes/splines/Bezier');
 
 const DelayedCooledDownWeightedRecurringCallbackTween = require('src/GameTypes/tweens/DelayedCooledDownWeightedRecurringCallbackTween');
@@ -29,27 +29,27 @@ const DelayedCooledDownWeightedRecurringCallbackTween = require('src/GameTypes/t
  * @param {CoreTypes.Point} positionStart
  * @param {CoreTypes.Point} positionEnd
  * @param {PIXI.Texture} texture
- * @param {Boolean} isReversed
+ * @param {BranchOptions} options
  */
 const BranchSprite = function(positionStart, positionEnd, texture, options) {
 	Sprite.call(this);
 	this.currentStep = 1;
-	this.subInterval = 8;
-	this.path = [];
-	this.positionstart = positionStart;
+	this.path = Array();
+	this.positionStart = positionStart;
 	this.positionEnd = positionEnd;
-	this.options = {
-		isReversed : options.isReversed,
-		animated : options.animated
-	};
-	this.refPositions = this.getPositions();
-	this.positions = [];
-	this.branchletSpawnPoints = this.getBranchletSpawnPoints();
-	this.durationForBranchlets = 8;
+	this.options = Object.assign({}, options);
+	
+	if (this.options.curveType === curveTypes.doubleQuad)
+		this.effectiveStepCount = defaultInterpolationStepCount * 2 + 1;
+	else
+		this.effectiveStepCount = defaultInterpolationStepCount;
+	this.animationTriggersCount = this.effectiveStepCount - 1;		// we update to position[24] on step 23 (=> don't call me on step 24) 
+	
+	this.refPositions = this.getRefPositions();
+	this.positions = Array();
 	
 	// Handle animated or preBuilt display
 	if (options.animated) {
-//		this.getPath = this.getPreBuiltPath;
 		this.getPath = this.getInitialStatePath;
 	}
 	else {
@@ -58,14 +58,23 @@ const BranchSprite = function(positionStart, positionEnd, texture, options) {
 	}
 
 	this.getPath();
+	this.branchletSpawnPoints = this.getBranchletSpawnPoints();
+	
+	this.distances = Array();
+	this.averageWeights = Array();
+	this.measureDistances();
+	
 	this.spriteObj = this.getSprite(texture);
 }
 BranchSprite.prototype = Object.create(Sprite.prototype);
-BranchSprite.prototype.stepCount = 12;
 /**
  * @static {String} objectType
  */
-BranchSprite.prototype.objectType = 'BranchSprite'; 
+BranchSprite.prototype.objectType = 'BranchSprite';
+/**
+ * @static {Number} stepCount
+ */
+BranchSprite.prototype.stepCount = defaultInterpolationStepCount;
 
 /**
  * @method getSprite
@@ -73,6 +82,7 @@ BranchSprite.prototype.objectType = 'BranchSprite';
  * @return {PIXI.SimpleRope}
  */
 BranchSprite.prototype.getSprite = function(texture) {
+	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 	return new PIXI.SimpleRope(texture, this.path);
 }
 
@@ -84,6 +94,7 @@ BranchSprite.prototype.getSprite = function(texture) {
 BranchSprite.prototype.getNextStepForPath = function(duration = 1) {
 	this.movingUpdatePath(duration);
 	this.currentStep++;
+//	console.log(this.currentStep);
 }
 
 /**
@@ -91,11 +102,35 @@ BranchSprite.prototype.getNextStepForPath = function(duration = 1) {
  * @return void
  */
 BranchSprite.prototype.getPreBuiltPath = function() {
-	const spline = new Bezier(this.refPositions);
-	const lut = spline.getLUT(this.stepCount);
 	
-	for (let i = 0, l = this.stepCount; i <= l; i++) {
-		this.path.push(new PIXI.Point(lut[i].x, lut[i].y));
+	
+	if (this.options.curveType === curveTypes.singleQuad) {
+		const spline = new Bezier(this.refPositions);
+		const lut = spline.getLUT(this.effectiveStepCount);
+		
+		for (let i = 0, l = this.effectiveStepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(lut[i].x, lut[i].y));
+		}
+	}
+	else if (this.options.curveType === curveTypes.doubleQuad) {
+		const stepCount = this.stepCount;
+		const spline1 = new Bezier(this.refPositions.slice(0, 4));
+		const lut1 = spline1.getLUT(stepCount);
+		for (let i = 0, l = stepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut1[i].x, lut1[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(lut1[i].x, lut1[i].y));
+		}
+		
+		const spline2 = new Bezier(this.refPositions.slice(3));
+		const lut2 = spline2.getLUT(stepCount);
+		for (let i = 1, l = stepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut2[i].x, lut2[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(lut2[i].x, lut2[i].y));
+		}
 	}
 }
 
@@ -103,13 +138,34 @@ BranchSprite.prototype.getPreBuiltPath = function() {
  * @method getInitialStatePath
  * @return void
  */
-BranchSprite.prototype.getInitialStatePath = function() {	
-	const spline = new Bezier(this.refPositions);
-	const lut = spline.getLUT(this.stepCount);
-	
-	for (let i = 0, l = this.stepCount; i <= l; i++) {
-		this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
-		this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
+BranchSprite.prototype.getInitialStatePath = function() {
+	if (this.options.curveType === curveTypes.singleQuad) {	
+		const spline = new Bezier(this.refPositions);
+		const lut = spline.getLUT(this.effectiveStepCount);
+		
+		for (let i = 0, l = this.effectiveStepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
+		}
+	}
+	else if (this.options.curveType === curveTypes.doubleQuad) {
+		const stepCount = this.stepCount;
+		const spline1 = new Bezier(this.refPositions.slice(0, 4));
+		const lut1 = spline1.getLUT(stepCount);
+		for (let i = 0, l = stepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut1[i].x, lut1[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
+		}
+		
+		const spline2 = new Bezier(this.refPositions.slice(3));
+		const lut2 = spline2.getLUT(stepCount);
+		for (let i = 1, l = stepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut2[i].x, lut2[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
+		}
 	}
 }
 
@@ -119,151 +175,12 @@ BranchSprite.prototype.getInitialStatePath = function() {
  * @return void
  */
 BranchSprite.prototype.movingUpdatePath = function(duration) {
-	let branchletSprite,
-		spriteCallbackName = 'getNextStepForPath',
-		branchletAnimationSteps = 2;
-	this.durationForBranchlets = Math.max(this.durationForBranchlets, duration);
+	let branchletStepIndex = 0;
+	const maxDurationForBranchlets = Math.max(this.options.maxDurationForBranchlets, duration);
 	
-	switch(this.currentStep) {
-		case 0 :
-			// can't be called on step 0
-			break;
-//		case 1 :
-//			this.updateAllPointsToCurrentStepPosition();
-//			this.updateAtCurrentStep(duration);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[5],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			break;
-//		case 2 :
-			// Branchlet
-//			branchletSprite = new BranchletSprite(
-//				this.branchletSpawnPoints[0][0],
-//				this.branchletSpawnPoints[0][1],
-//				this.branchletSpawnPoints[0][2],
-//				loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + 'branchlet0' + this.getRandomBranchlet(3)],
-//				this.isReversed
-//			);
-//			GameLoop().addSpriteToScene(
-//				branchletSprite
-//			);
-//			GameLoop().pushTween(
-//				new DelayedCooledDownWeightedRecurringCallbackTween(branchletSprite, spriteCallbackName, this.durationForBranchlets, branchletAnimationSteps, 0)
-//			);
-			
-//			this.updateAllPointsToCurrentStepPosition();
-//			this.updateAtCurrentStep(duration);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[3],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[4],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[5],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			break;
-//		case 3 :
-			// Branchlet
-//			branchletSprite = new BranchletSprite(
-//				this.branchletSpawnPoints[2][0],
-//				this.branchletSpawnPoints[2][1],
-//				this.branchletSpawnPoints[2][2],
-//				loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + 'branchlet0' + this.getRandomBranchlet(3)],
-//				this.isReversed
-//			);
-//			GameLoop().addSpriteToScene(
-//				branchletSprite
-//			);
-//			GameLoop().pushTween(
-//				new DelayedCooledDownWeightedRecurringCallbackTween(branchletSprite, spriteCallbackName, this.durationForBranchlets, branchletAnimationSteps, 0)
-//			);
-			// Branchlet 2
-//			branchletSprite = new BranchletSprite(
-//				this.branchletSpawnPoints[1][0],
-//				this.branchletSpawnPoints[1][1],
-//				this.branchletSpawnPoints[1][2],
-//				loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + 'branchlet0' + this.getRandomBranchlet(3)],
-//				this.isReversed
-//			);
-//			GameLoop().addSpriteToScene(
-//				branchletSprite
-//			);
-//			GameLoop().pushTween(
-//				new DelayedCooledDownWeightedRecurringCallbackTween(branchletSprite, spriteCallbackName, this.durationForBranchlets, branchletAnimationSteps, 0)
-//			);
-			
-//			this.updateAllPointsToCurrentStepPosition();
-//			this.updateAtCurrentStep(duration);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[4],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[5],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			break;
-//		case 4 :
-//			
-//			this.updateAllPointsToCurrentStepPosition();
-//			this.updateAtCurrentStep(duration);
-//			GameLoop().pushTween(
-//				new TargetPositionTween(
-//					this.path[5],
-//					new CoreTypes.Transform(
-//						this.refPositions[this.currentStep + 1].x.value,
-//						this.refPositions[this.currentStep + 1].y.value
-//					),
-//					duration
-//				)
-//			);
-//			break;
-		default : 
-//			this.updateAllPointsToCurrentStepPosition();
-			this.updateAtCurrentStep(duration);
-			break;
-	}
+	if ((branchletStepIndex = this.options.branchletStepIndicesforBranches.indexOf(this.currentStep)) !== -1)
+		this.addNewBranchlet(branchletStepIndex, maxDurationForBranchlets);
+	this.updateAtCurrentStep(duration);
 }
 
 /**
@@ -272,15 +189,20 @@ BranchSprite.prototype.movingUpdatePath = function(duration) {
  * @return void
  */
 BranchSprite.prototype.updateAtCurrentStep = function(duration) {
-	for (let i = this.currentStep, l = this.stepCount; i <= l; i++) {
-//		console.log(this.UID, this.positions[this.currentStep].x.value, this.positions[this.currentStep].y.value);
-		
-		this.path[i].x = this.positions[this.currentStep].x.value;
-		this.path[i].y = this.positions[this.currentStep].y.value;
-
+//	if (this.currentStep === 0)
+//		return;
+//	console.log(this.distances[this.currentStep])
+//	if (this.distances[this.currentStep] > 15) {
+//		if (this.currentStep > 0)
+//			for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
+//				this.path[i].x = this.positions[this.currentStep - 1].x.value;
+//				this.path[i].y = this.positions[this.currentStep - 1].y.value;
+//			}
+//		
+////		console.log(this.currentStep)//, this.positions[this.currentStep]);
 //		GameLoop().pushTween(
 //			new TargetPositionTween(
-//				this.path[i],
+//				this.path[this.path.length - 1],
 //				new CoreTypes.Transform(
 //					this.positions[this.currentStep].x.value,
 //					this.positions[this.currentStep].y.value
@@ -288,19 +210,14 @@ BranchSprite.prototype.updateAtCurrentStep = function(duration) {
 //				duration
 //			)
 //		);
-	}
-}
-
-/**
- * @method movingUpdatePath
- * @param {Number} duration
- * @return void
- */
-BranchSprite.prototype.updateAllPointsToCurrentStepPosition = function() {
-	for (let i = this.currentStep, l = this.positions.length; i < l; i++) {
-		this.path[i].x = this.positions[this.currentStep].x.value;
-		this.path[i].y = this.positions[this.currentStep].y.value;
-	}
+//	}
+//	else {
+	// seems path[end] is not the last point displayed
+		for (let i = this.currentStep + 1, l = this.effectiveStepCount; i < l; i++) {
+			this.path[i].x = this.positions[this.currentStep + 1].x.value;
+			this.path[i].y = this.positions[this.currentStep + 1].y.value;
+		}
+//	}
 }
 
 /**
@@ -309,26 +226,33 @@ BranchSprite.prototype.updateAllPointsToCurrentStepPosition = function() {
  * @return Array<CoreTypes.Point>
  */
 /**
- * @method getPositions
- * @return Array<CoreTypes.Point>
+ * @method getRefPositions
+ * @return Array<CoreTypes.Simple3DPoint>
  */
-BranchSprite.prototype.getPositions = function() {
-	const seededOffset = Math.random() * 4 + 16;
-	const horizontalOffset1 = (this.positionEnd.x.value - this.positionstart.x.value) / 2,
-		horizontalOffset2 = 29,
-		verticalOffset = (this.positionEnd.y.value - this.positionstart.y.value) / 4;
-	if (!this.options.isReversed)
+BranchSprite.prototype.getRefPositions = function() {
+	const isHorizontal = Math.round(this.positionEnd.y.value - this.positionStart.y.value) === 0,
+		middleHorizontalOffset = (this.positionEnd.x.value - this.positionStart.x.value) / 2,
+		quarterOfMidHorizontalOffset = isHorizontal								// quarter is quarter of the half-distance
+			? middleHorizontalOffset / 4
+			: 0,
+		horizontalOffset = !isHorizontal
+			? middleHorizontalOffset
+			: 0;
+	let verticalOffset = Math.round((this.positionEnd.y.value - this.positionStart.y.value) / 2) + 1,	// + 1 => avoid dividing by zero
+		verticalControlOffset = (verticalOffset / Math.abs(verticalOffset)) * Math.abs(horizontalOffset);
+	
+	if (this.options.curveType === curveTypes.singleQuad)
 		return [
 			new CoreTypes.Simple3DPoint(
-				this.positionstart.x.value,
-				this.positionstart.y.value
+				this.positionStart.x.value,
+				this.positionStart.y.value
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionstart.x.value + horizontalOffset1,
-				this.positionstart.y.value
+				this.positionStart.x.value + horizontalOffset,
+				this.positionStart.y.value
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionEnd.x.value - horizontalOffset1,
+				this.positionEnd.x.value - horizontalOffset,
 				this.positionEnd.y.value
 			),
 			new CoreTypes.Simple3DPoint(
@@ -339,23 +263,27 @@ BranchSprite.prototype.getPositions = function() {
 	else
 		return [
 			new CoreTypes.Simple3DPoint(
-				this.positionstart.x.value,
-				this.positionstart.y.value
+				this.positionStart.x.value,
+				this.positionStart.y.value
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionstart.x.value - horizontalOffset1,
-				this.positionstart.y.value
+				this.positionStart.x.value + horizontalOffset + quarterOfMidHorizontalOffset,
+				this.positionStart.y.value
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionstart.x.value - horizontalOffset2,
-				this.positionstart.y.value - verticalOffset
+				this.positionStart.x.value + middleHorizontalOffset - quarterOfMidHorizontalOffset,
+				this.positionStart.y.value
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionEnd.x.value + horizontalOffset2,
-				this.positionEnd.y.value + verticalOffset
+				this.positionEnd.x.value - middleHorizontalOffset,
+				this.positionEnd.y.value - verticalControlOffset
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionEnd.x.value + horizontalOffset1,
+				this.positionEnd.x.value - middleHorizontalOffset + quarterOfMidHorizontalOffset,
+				this.positionEnd.y.value
+			),
+			new CoreTypes.Simple3DPoint(
+				this.positionEnd.x.value - horizontalOffset + quarterOfMidHorizontalOffset,
 				this.positionEnd.y.value
 			),
 			new CoreTypes.Simple3DPoint(
@@ -364,142 +292,63 @@ BranchSprite.prototype.getPositions = function() {
 			)
 		];
 }
-//BranchSprite.prototype.getPositions = function(isReversed) {
-//	const seededOffset = Math.random() * 4 + 16;
-//	const horizontalOffset1 = 12,
-//		horizontalOffset2 = 29,
-//		verticalOffset = (this.positionstart.y.value - this.positionEnd.y.value) / seededOffset;
-//	if (!isReversed)
-//		return [
-//			new CoreTypes.Point(
-//				this.positionstart.x.value,
-//				this.positionstart.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionstart.x.value + horizontalOffset1,
-//				this.positionstart.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionstart.x.value + horizontalOffset2,
-//				this.positionstart.y.value - verticalOffset
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value - horizontalOffset2,
-//				this.positionEnd.y.value + verticalOffset
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value - horizontalOffset1,
-//				this.positionEnd.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value,
-//				this.positionEnd.y.value
-//			)
-//		];
-//	else
-//		return [
-//			new CoreTypes.Point(
-//				this.positionstart.x.value,
-//				this.positionstart.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionstart.x.value - horizontalOffset1,
-//				this.positionstart.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionstart.x.value - horizontalOffset2,
-//				this.positionstart.y.value - verticalOffset
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value + horizontalOffset2,
-//				this.positionEnd.y.value + verticalOffset
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value + horizontalOffset1,
-//				this.positionEnd.y.value
-//			),
-//			new CoreTypes.Point(
-//				this.positionEnd.x.value,
-//				this.positionEnd.y.value
-//			)
-//		];
-//}
 
 /**
  * @method getBranchletSpawnPoints
  * @return Array<CoreTypes.Point>
  */
 BranchSprite.prototype.getBranchletSpawnPoints = function() {
-	const hypot = BranchletSprite.prototype.defaultDimensions.y.value,
-		randomAngle1 = this.getRandomBranchletAngle(),
-		randomAngle2 = this.getRandomBranchletAngle(),
-		randomAngle3 = this.getRandomBranchletAngle(),
-		x1 = Math.cos(randomAngle1) * hypot,
-		y1 = Math.sin(randomAngle1) * hypot,
-		x2 = Math.cos(randomAngle2) * hypot,
-		y2 = Math.sin(randomAngle2) * hypot,
-		x3 = Math.cos(randomAngle3) * hypot,
-		y3 = Math.sin(randomAngle3) * hypot,
-		firstBranchLengthPoint = new CoreTypes.Point(
-			this.refPositions[2].x + (this.refPositions[3].x - this.refPositions[2].x) / 7,
-			this.refPositions[2].y + (this.refPositions[3].y - this.refPositions[2].y) / 7
-		),
-		secondBranchLengthPoint = new CoreTypes.Point(
-			this.refPositions[3].x - ((this.refPositions[3].x - this.refPositions[2].x) * .38 * (Math.random() / 4 + 1)),
-			this.refPositions[3].y - ((this.refPositions[3].y - this.refPositions[2].y) * .38 * (Math.random() / 4 + 1))
-		);
-	return [
-		[
-			new CoreTypes.Point(
-				firstBranchLengthPoint.x.value,
-				firstBranchLengthPoint.y.value
-			),
-			new CoreTypes.Point(
-				firstBranchLengthPoint.x.value + x1 / 2,
-				firstBranchLengthPoint.y.value + y1 / 2
-			),
-			new CoreTypes.Point(
-				firstBranchLengthPoint.x.value + x1,
-				firstBranchLengthPoint.y.value + y1
-			)
-		],
-		[
-			new CoreTypes.Point(
-				secondBranchLengthPoint.x.value,
-				secondBranchLengthPoint.y.value
-			),
-			new CoreTypes.Point(
-				secondBranchLengthPoint.x.value + x2 / 2,
-				secondBranchLengthPoint.y.value + y2 / 2
-			),
-			new CoreTypes.Point(
-				secondBranchLengthPoint.x.value + x2,
-				secondBranchLengthPoint.y.value + y2
-			)
-		],
-		[
-			new CoreTypes.Point(
-				this.refPositions[3].x,
-				this.refPositions[3].y
-			),
-			new CoreTypes.Point(
-				this.refPositions[3].x + x3 / 2,
-				this.refPositions[3].y + y3 / 2
-			),
-			new CoreTypes.Point(
-				this.refPositions[3].x + x3,
-				this.refPositions[3].y + y3
-			)
-		]
-	];
+	const hypot = BranchletSprite.prototype.defaultDimensions.x.value;
+	let pointList = Array(),
+		randomAngle = 0,
+		x = 0,
+		y = 0;
+	
+	this.options.branchletStepIndicesforBranches.forEach(function(branchletIndex) {
+		randomAngle = this.getRandomBranchletAngle();
+		x = Math.cos(randomAngle) * hypot;
+		y = Math.sin(randomAngle) * hypot;
+		pointList.push(
+			[
+				new CoreTypes.Point(
+					this.positions[branchletIndex].x.value,
+					this.positions[branchletIndex].y.value
+				),
+				new CoreTypes.Point(
+					this.positions[branchletIndex].x.value + x / 2,
+					this.positions[branchletIndex].y.value + y / 2
+				),
+				new CoreTypes.Point(
+					this.positions[branchletIndex].x.value + x,
+					this.positions[branchletIndex].y.value + y
+				)
+			]
+		)
+	}, this);
+	
+	return pointList;
 }
 
-BranchSprite.prototype.offsetPositionsAfterScale = function(marginTop) {
-	this.refPositions.forEach(function(position) {
-		position.y -= marginTop;
-	});
-	this.path.length = 0;
-	this.getPath();
+/**
+ * @method addNewBranchlet
+ * @param {Number} branchletStepIndex
+ * @param {Number} maxDurationForBranchlets
+ */
+BranchSprite.prototype.addNewBranchlet = function(branchletStepIndex, maxDurationForBranchlets) {
+	const branchletSprite = new BranchletSprite(
+		this.branchletSpawnPoints[branchletStepIndex][0],
+		this.branchletSpawnPoints[branchletStepIndex][1],
+		this.branchletSpawnPoints[branchletStepIndex][2],
+		loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + this.branchLetNameConstant + this.getRandomBranchlet(3)],
+		false
+	);
+	
+	GameLoop().addSpriteToScene(
+		branchletSprite
+	);
+	GameLoop().pushTween(
+		new DelayedCooledDownWeightedRecurringCallbackTween(branchletSprite, this.spriteCallbackName, maxDurationForBranchlets, branchletAnimationSteps, 0)
+	);
 }
 
 BranchSprite.prototype.getRandomBranchletAngle = function() {
@@ -509,7 +358,7 @@ BranchSprite.prototype.getRandomBranchletAngle = function() {
 	Math.random();
 	Math.random();
 	Math.random();
-	const angle = Math.atan2((this.positionEnd.y.value - this.positionstart.y.value), (this.positionEnd.x.value - this.positionstart.x.value));
+	const angle = Math.atan2((this.positionEnd.y.value - this.positionStart.y.value), (this.positionEnd.x.value - this.positionStart.x.value));
 	
 	return !this.options.isReversed
 		? angle - (Math.random() * (Math.PI / 4) * Math.ceil(Math.random() * 3 - 1.999))
@@ -534,9 +383,55 @@ BranchSprite.prototype.defaultDimensions = new CoreTypes.Dimension(
 );
 
 /**
+ * @static {String} spriteCallbackName
+ */
+BranchSprite.prototype.spriteCallbackName = 'getNextStepForPath';
+
+
+/**
+ * @static {String} branchLetNameConstant
+ */
+BranchSprite.prototype.branchLetNameConstant = 'branchlet0';
+
+/**
  * @static @method noOp
  */
 BranchSprite.prototype.noOp = function() {}
+
+/**
+ * @method measureDistances
+ * LATE-INITIALISATION of BranchSprite.prototype.averageWeights
+ */
+BranchSprite.prototype.measureDistances = function() {
+	let lastPosition = new CoreTypes.Point(0, 0),
+		distance = 0,
+		totalDistance = 0;
+	
+	this.positions.forEach(function(position) {
+		if (lastPosition.x.value === 0 && lastPosition.y.value === 0) {
+			lastPosition = position;
+			return;
+		}
+		distance = Math.hypot(position.x.value - lastPosition.x.value, position.y.value - lastPosition.y.value);
+		totalDistance += distance;
+		this.distances.push(distance);
+		lastPosition = position;
+	}, this);
+	
+	this.averageWeights.push(0);
+	this.distances.forEach(function(distance) {
+		this.averageWeights.push((distance / totalDistance) * 24);
+	}, this);
+//	console.log(this.averageWeights);
+}
+
+/**
+ * @static @method updateAverageWeights
+ */
+BranchSprite.prototype.updateAverageWeights = function() {
+	this.averageWeights.length = 0;
+	this.measureDistances();
+}
 
 
 
