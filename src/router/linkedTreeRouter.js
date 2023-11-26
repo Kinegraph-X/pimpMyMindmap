@@ -73,7 +73,12 @@ var classConstructor = function() {
 		 */
 		
 		// WAIT FOR THE FONT & LAUNCH !!!!!!!!!!! RASTER RENDERING
-		(new FontFaceObserver('roboto')).load().then(function() {
+		/* Fontfaceobserver : (from the github) 
+		 * If your font doesn't contain at least the latin "BESbwy" characters
+		 * you must pass a custom test string to the load method.
+		 * (here, null) 
+		 */
+		(new FontFaceObserver('roboto')).load(null, 10000).then(function() {
 			AssetsLoader.then(function() {
 				new GlobalHandler(
 					rootNodeSelector,

@@ -99,6 +99,7 @@ LeafSprite.prototype.getPreBuiltPath = function() {
 	for (let i = 0, l = this.stepCount; i <= l; i++) {
 		// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 		this.path.push(new PIXI.Point(lut[i].x, lut[i].y));
+		this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
 	}
 }
 

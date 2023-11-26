@@ -42,8 +42,8 @@ const BranchSprite = function(positionStart, positionEnd, texture, options) {
 	if (this.options.curveType === curveTypes.doubleQuad)
 		this.effectiveStepCount = defaultInterpolationStepCount * 2 + 1;
 	else
-		this.effectiveStepCount = defaultInterpolationStepCount;
-	this.animationTriggersCount = this.effectiveStepCount - 1;		// we update to position[24] on step 23 (=> don't call me on step 24) 
+		this.effectiveStepCount = defaultInterpolationStepCount + 1;
+	this.animationTriggersCount = this.effectiveStepCount - 2;		// we update to position[24] on step 23 (=> don't call me on step 24) 
 	
 	this.refPositions = this.getRefPositions();
 	this.positions = Array();
@@ -106,9 +106,9 @@ BranchSprite.prototype.getPreBuiltPath = function() {
 	
 	if (this.options.curveType === curveTypes.singleQuad) {
 		const spline = new Bezier(this.refPositions);
-		const lut = spline.getLUT(this.effectiveStepCount);
+		const lut = spline.getLUT(this.stepCount);
 		
-		for (let i = 0, l = this.effectiveStepCount; i <= l; i++) {
+		for (let i = 0, l = this.stepCount; i <= l; i++) {
 			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
 			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 			this.path.push(new PIXI.Point(lut[i].x, lut[i].y));
@@ -141,9 +141,9 @@ BranchSprite.prototype.getPreBuiltPath = function() {
 BranchSprite.prototype.getInitialStatePath = function() {
 	if (this.options.curveType === curveTypes.singleQuad) {	
 		const spline = new Bezier(this.refPositions);
-		const lut = spline.getLUT(this.effectiveStepCount);
+		const lut = spline.getLUT(this.stepCount);
 		
-		for (let i = 0, l = this.effectiveStepCount; i <= l; i++) {
+		for (let i = 0, l = this.stepCount; i <= l; i++) {
 			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
 			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
@@ -212,6 +212,7 @@ BranchSprite.prototype.updateAtCurrentStep = function(duration) {
 //		);
 //	}
 //	else {
+//	console.log('currentStep', this.currentStep, this.effectiveStepCount);
 	// seems path[end] is not the last point displayed
 		for (let i = this.currentStep + 1, l = this.effectiveStepCount; i < l; i++) {
 			this.path[i].x = this.positions[this.currentStep + 1].x.value;
@@ -420,7 +421,7 @@ BranchSprite.prototype.measureDistances = function() {
 	
 	this.averageWeights.push(0);
 	this.distances.forEach(function(distance) {
-		this.averageWeights.push((distance / totalDistance) * 24);
+		this.averageWeights.push((distance / totalDistance) * this.effectiveStepCount);
 	}, this);
 //	console.log(this.averageWeights);
 }

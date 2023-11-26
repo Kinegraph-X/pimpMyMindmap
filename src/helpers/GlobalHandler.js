@@ -13,7 +13,7 @@ const {themeDescriptors} = require('src/GameTypes/gameSingletons/gameConstants')
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
 
-const linkedTreeData = require('src/clientRoutes/mapData');	//  _problem _partial2
+const linkedTreeData = require('src/clientRoutes/mapData');	//  _problem _partial2 
 
 		/*
 		 * globalHandler
@@ -44,7 +44,7 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	// Force the style here as we're in light theme for the rendering in canvas
 	document.body.style.backgroundColor = '#161e22';
 	this.mapData = this.parseMapData(initialMapData);
-	GameState().currentTheme = this.defaultTheme;
+	GameState().currentTheme = this.getInitialTheme();
 	this.alignment = 'centerAligned';
 //	this.alignment = 'leftAligned';
 
@@ -126,7 +126,7 @@ GlobalHandler.prototype.hookKeyboard = function() {
 					self.componentsHelper.rootViewComponent.view.getWrappingNode().prepend(image);
 					self.stopLoadingSpinner();
 				});				
-			}, 2048);
+			}, 512);
 		}
 	});
 }
@@ -153,7 +153,7 @@ GlobalHandler.prototype.getInitialTheme = function() {
 	if ((themeMatch = location.href.match(/theme=(.*)$/))) {
 		theme = themeDescriptors.hasOwnProperty(themeMatch[1]) && themeMatch[1];
 	}
-	return theme;
+	return theme || this.defaultTheme;
 }
 
 /**
@@ -172,12 +172,15 @@ GlobalHandler.prototype.setTheme = function(theme) {
  * @param {FrameworkEvent} e
  */
 GlobalHandler.prototype.handleMapChanged = function(e) {
+	const self = this;
 	GameLoop().stop();
-	this.startLoadingSpinner();
-	this.glHelper.abortAutoLoopEnd();
-	
-	// @ts-ignore inherited property (FrameworkEvent is just mocked)
-	this.apiHelper.getMapData(e.data);
+	self.startLoadingSpinner();
+	setTimeout(function() {
+		self.glHelper.abortAutoLoopEnd();
+		
+		// @ts-ignore inherited property (FrameworkEvent is just mocked)
+		self.apiHelper.getMapData(e.data);
+	}, 1024);
 }
 
 /**
@@ -185,15 +188,16 @@ GlobalHandler.prototype.handleMapChanged = function(e) {
  * @param {FrameworkEvent} e
  */
 GlobalHandler.prototype.handleThemeChanged = function(e) {
+	const self = this;
 	GameLoop().stop();
-	this.startLoadingSpinner();
-	this.glHelper.abortAutoLoopEnd();
-	
-	// @ts-ignore inherited property (FrameworkEvent is just mocked)
-	GameState().currentTheme = e.data;
-	this.componentsHelper.onResetMapComponent(this.mapData, this.alignment);
-	this.stopLoadingSpinner()
-	GameLoop().start();
+	self.startLoadingSpinner();
+	setTimeout(function() {
+		self.glHelper.abortAutoLoopEnd();
+		
+		// @ts-ignore inherited property (FrameworkEvent is just mocked)
+		GameState().currentTheme = e.data;
+		self.componentsHelper.onResetMapComponent(self.mapData, self.alignment);
+	}, 1024);
 }
 
 /**
@@ -204,7 +208,6 @@ GlobalHandler.prototype.handleNewMapData = function(e) {
 	this.mapData = e.data;
 	// onResetMapComponent
 	this.componentsHelper.onResetMapComponent(this.mapData, this.alignment);
-	this.stopLoadingSpinner();
 }
 
 /**

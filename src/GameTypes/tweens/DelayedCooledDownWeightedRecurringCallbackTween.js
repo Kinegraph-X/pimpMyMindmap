@@ -59,6 +59,7 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.objectType = 'DelayedC
  * @return Void
  */
 DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
+	var missedSteps = 0, currentIterationFrameCount = this.interval * this.weights[this.currentIteration];
 	this.lastStepTimestamp = timestamp;
 	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 	if (timestamp < GameState().rootTimestamp + this.offsetFromRootTimestamp) {
@@ -75,13 +76,32 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
 	stepCount *= frameDuration / this.baseFrameDuration;
 	this.currentPartialStep += stepCount;
 	
-	if (this.currentPartialStep < this.interval * this.weights[this.currentIteration]) {	//  
+	if (this.currentPartialStep < currentIterationFrameCount) {	//  
 		return;
 	}
 	else {
-//		this.debugDuration += this.interval * this.weights[this.currentIteration];
+//		console.log('currentIteration', this.currentIteration);
+		this.debugDuration += this.interval * this.weights[this.currentIteration];
 
-		this.currentPartialStep =  Math.round(this.currentPartialStep - this.interval * this.weights[this.currentIteration]); // Math.floor();	// anticipate accumulating error if we reset the partialStep on a long frame
+		this.currentPartialStep =  Math.round(this.currentPartialStep - currentIterationFrameCount); // Math.floor();	// anticipate accumulating error if we reset the partialStep on a long frame
+
+		// In a situation of very low perfs, we could be in an "always overflowed" currentPartialStep
+		// but triggering only one iteration each time we're called => the overflow shall accumulate, potentially hugely
+		// Allow triggering more than one iteration when we've crossed more than one partial step
+		// => this ensures the total tween has the right duration
+		let nextIterationFrameCount = 0;
+		for(let i = this.currentIteration + 1, l = this.iterationCount; i < l; i++) {
+			nextIterationFrameCount = this.interval * this.weights[i];
+			if (this.currentPartialStep >= nextIterationFrameCount) {
+				this.currentPartialStep = Math.round(this.currentPartialStep - nextIterationFrameCount);
+				console.log('dropped step');
+				missedSteps++;
+			}
+			else
+				break;
+		}
+
+		
 //		console.log(this.currentPartialStep)
 		this.currentIteration++;
 		if (this.currentIteration === this.iterationCount - 1) {
@@ -92,8 +112,19 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
 //			return;
 		}
 	}
+	
+	for(let i = 0, l = missedSteps; i < l; i++) {
+		// @ts-ignore : TS doesn't understand anything to prototypal inheritance
+		this.target[this.cbName].call(this.target, Math.max(2, currentIterationFrameCount));	//  
+		this.currentIteration++;
+		if (this.currentIteration === this.iterationCount - 1) {
+			this.ended = true;
+		}
+		currentIterationFrameCount = this.interval * this.weights[this.currentIteration];
+	}
+	
 	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
-	return this.target[this.cbName].call(this.target, Math.max(2, this.interval * this.weights[this.currentIteration]));	//  
+	return this.target[this.cbName].call(this.target, Math.max(2, currentIterationFrameCount));	//  
 }
 
 /**

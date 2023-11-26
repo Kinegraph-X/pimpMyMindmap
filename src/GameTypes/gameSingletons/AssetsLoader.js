@@ -26,7 +26,7 @@ const manifest = {
 				{name : 'midifruit01', srcs : 'plugins/LinkedTree/assets/fruits/fruit_midi_theme_01.png'},
 				{name : 'midifruit02', srcs : 'plugins/LinkedTree/assets/fruits/fruit_midi_theme_02.png'},
 
-				{name : 'midithemeBg', srcs : 'plugins/LinkedTree/assets/backgrounds/Midi_Theme.png'},
+				{name : 'midithemeBg', srcs : 'plugins/LinkedTree/assets/backgrounds/midi_Theme.png'},
 				
 				{name : 'midilogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
 			]

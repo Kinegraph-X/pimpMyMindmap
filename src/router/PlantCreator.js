@@ -113,8 +113,9 @@ PlantCreator.prototype.getBranches = function() {
 		fruit02 = 'fruit02',
 		branchAnimationSteps = BranchSprite.prototype.stepCount,
 		leafAnimationSteps = 3,
+		standardFruitFadeDuration = 30,
 		maxYExcursion = 80,
-		refDistance = 400;
+		refDistance = 12000;
 	let	currentDepth = 4,
 		deltaTimeOffset = 0, // branchAnimationSteps * this.subInterval,
 		distanceWeightedFactor = 1,
@@ -170,12 +171,16 @@ PlantCreator.prototype.getBranches = function() {
 				else
 					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + branch01], branchOptions);
 				
+//				console.log(branchSprite.stepCount / branchSprite.effectiveStepCount); //branchSprite.stepCount /
+				
 				// @ts-ignore : LayoutNode type isn't completely mocked
 				localDeltaTime = this.delaysMap[currentOrigin._UID].offset;
 				distanceWeightedFactor = this.getDistance(positionStart, positionEnd) / refDistance;
-				effectiveInterval = (branchSprite.stepCount / branchSprite.effectiveStepCount) * this.subInterval * distanceWeightedFactor;
+				effectiveInterval = (branchSprite.animationTriggersCount) * this.subInterval * distanceWeightedFactor;
 				deltaTimeOffset = branchSprite.animationTriggersCount * effectiveInterval;
 				effectiveDuration += deltaTimeOffset;
+				
+//				console.log(effectiveDuration);
 				
 				if (themeDescriptors[GameState().currentTheme].dropShadows)
 					// @ts-ignore : PIXI.SimpleRope type isn't completely mocked
@@ -185,7 +190,7 @@ PlantCreator.prototype.getBranches = function() {
 					branchSprite
 				);
 				
-				branchTween = new DelayedCooledDownWeightedRecurringCallbackTween(branchSprite, spriteCallbackName, effectiveInterval, branchSprite.animationTriggersCount, localDeltaTime); 
+				branchTween = new DelayedCooledDownWeightedRecurringCallbackTween(branchSprite, spriteCallbackName, effectiveInterval, branchSprite.effectiveStepCount, localDeltaTime); 
 				branchTween.updateWeights(branchSprite.averageWeights);
 				GameLoop().pushTween(
 					branchTween
@@ -198,7 +203,7 @@ PlantCreator.prototype.getBranches = function() {
 				
 				
 				distanceWeightedFactor = this.getDistance(positionEnd, positionContinued) / refDistance;
-				effectiveInterval = (branchSprite.stepCount / branchSprite.effectiveStepCount) * this.subInterval * distanceWeightedFactor;
+				effectiveInterval = (branchSprite.animationTriggersCount) * this.subInterval * distanceWeightedFactor;
 				
 				GameLoop().addSpriteToScene(
 					branchSprite
@@ -246,7 +251,7 @@ PlantCreator.prototype.getBranches = function() {
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					fruitSprite.alpha = 0
 					GameLoop().pushTween(
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, deltaTimeOffset)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				
@@ -255,7 +260,7 @@ PlantCreator.prototype.getBranches = function() {
 					node.canvasShape.shape.alpha = 0
 					GameLoop().pushTween(
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration + 10, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, deltaTimeOffset)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration + standardFruitFadeDuration * 2, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				
@@ -295,9 +300,9 @@ PlantCreator.prototype.getBranches = function() {
 				
 				leafSprite = new LeafSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + leafTextureName], branchOptions);
 				
-				effectiveInterval = (leafSprite.stepCount / leafSprite.effectiveStepCount) * this.subInterval;
+				effectiveInterval = this.subInterval;
 				deltaTimeOffset = leafSprite.effectiveStepCount * effectiveInterval ;
-				effectiveDuration = deltaTimeOffset * 2;
+				effectiveDuration = deltaTimeOffset;
 				// @ts-ignore : LayoutNode type isn't completely mocked
 				localDeltaTime = this.delaysMap[currentOrigin._UID].offset;
 				// @ts-ignore : LayoutNode type isn't completely mocked
@@ -340,7 +345,7 @@ PlantCreator.prototype.getBranches = function() {
 					// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 					fruitSprite.rotation = !branchOptions.isReversed ? -30 : 15;
 					GameLoop().pushTween(
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, deltaTimeOffset)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				
@@ -349,7 +354,7 @@ PlantCreator.prototype.getBranches = function() {
 					node.canvasShape.shape.alpha = 0
 					GameLoop().pushTween(
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, deltaTimeOffset)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				if (themeDescriptors[GameState().currentTheme].dropShadows) {
@@ -362,12 +367,13 @@ PlantCreator.prototype.getBranches = function() {
 				if (node._parent.nodeName === spanNodeName) {
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					localDeltaTime = this.delaysMap[node._parent._parent._UID].offset;
+					// @ts-ignore : LayoutNode type isn't completely mocked
 					localDuration = this.delaysMap[node._parent._parent._UID].duration;
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					node.canvasShape.shape.alpha = 0
 					GameLoop().pushTween(
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + localDuration, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, this.subInterval)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 4, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				// @ts-ignore : LayoutNode type isn't completely mocked
@@ -378,14 +384,14 @@ PlantCreator.prototype.getBranches = function() {
 					node.canvasShape.shape.alpha = 0
 					GameLoop().pushTween(
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, this.subInterval)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 2, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 			}
 		}, this);
 		 
 		if (isNodeDepth) {
-			console.log('UpdateDelta', deltaTime, deltaTimeOffset);
+//			console.log('UpdateDelta', deltaTime, deltaTimeOffset);
 			deltaTime += deltaTimeOffset * 2;
 		}
 		currentDepth += 1;

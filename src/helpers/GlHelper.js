@@ -35,7 +35,7 @@ GlHelper.prototype.initLoop = function() {
 }
 
 GlHelper.prototype.prepareAutoLoopEnd = function() {
-	this.globalTimeout = setTimeout(GameLoop().stop.bind(GameLoop()), 45 * 1000);
+	this.globalTimeout = setTimeout(GameLoop().stop.bind(GameLoop()), 60 * 1000);
 }
 
 GlHelper.prototype.abortAutoLoopEnd = function() {

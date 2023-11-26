@@ -157,9 +157,7 @@ ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 		alignment
 	);
 	// @ts-ignore App isn't typed
-//	new App.DelayedDecoration();
-	// Not working : why ? The linkedTree is still rendered...
-	App.Ignition.prototype.cleanRegisters();
+	new App.DelayedDecoration();
 }
 
 
@@ -198,16 +196,19 @@ ComponentsHelper.prototype.hackyThemeSelectorDecorator = function () {
 		
 		span = document.createElement('span');
 		span.textContent = themeName;
-		opt = this.themeListSelector._children[0]._children[i].view.getMasterNode();
-		opt.textContent = '';
+		opt = this.themeListSelector._children[0]._children[i].view.getWrappingNode();
+		Array.from(opt.childNodes).forEach(function(child) {
+			if (child instanceof Text)
+				opt.removeChild(child);
+		})
 		opt.appendChild(span);
 		
 		img = document.createElement('img');
-		img.src = thunbnailPath + themeName + thumbnailExt;
 		// @ts-ignore callback
 		img.onload = function(idx, optElem, e) {
 			optElem.prepend(e.target);	
 		}.bind(null, i, opt)
+		img.src = thunbnailPath + themeName + thumbnailExt;
 		i++;
 	}
 }
@@ -242,7 +243,7 @@ ComponentsHelper.prototype.hookLoadThemeEventOnThemeSelector = function () {
 			return;
 		this.trigger(
 			'themeChanged',
-			this.themeListSelector._children[0]._children[key].view.getMasterNode().querySelector('span').textContent
+			this.themeListSelector._children[0]._children[key].view.getWrappingNode().querySelector('span').textContent
 		);
 	}
 	this.themeListSelector.addEventListener('update', cb.bind(this));
@@ -298,7 +299,7 @@ ComponentsHelper.prototype.executeLayout = function() {
 		this.layoutRes.finallyCleanLayoutTree();
 	
 	// @ts-ignore Component isn't typed
-	const naiveDOM = this.rootViewComponent._children[2].getNaiveDOM();
+	const naiveDOM = this.linkedTreeInstance.getNaiveDOM();
 	
 	const styleSolver = new ComputedStyleSolver(
 		naiveDOM,

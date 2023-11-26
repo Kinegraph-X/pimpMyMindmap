@@ -1,6 +1,6 @@
 /**
  * @definitions
-*/
+ */
 
 /**
 * @type {{[key:String] : String}}
@@ -83,7 +83,7 @@ const themeDescriptors = {
 		null,
 		true,
 		true,
-		false,
+		true,
 		null,
 		null,
 		[2, 5, 10],
