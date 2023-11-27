@@ -43,7 +43,7 @@ const BranchSprite = function(positionStart, positionEnd, texture, options) {
 		this.effectiveStepCount = defaultInterpolationStepCount * 2 + 1;
 	else
 		this.effectiveStepCount = defaultInterpolationStepCount + 1;
-	this.animationTriggersCount = this.effectiveStepCount - 2;		// we update to position[24] on step 23 (=> don't call me on step 24) 
+	this.animationTriggersCount = this.effectiveStepCount;		// we update to position[24] on step 23 (=> don't call me on step 24) 
 	
 	this.refPositions = this.getRefPositions();
 	this.positions = Array();
@@ -404,6 +404,9 @@ BranchSprite.prototype.noOp = function() {}
  * LATE-INITIALISATION of BranchSprite.prototype.averageWeights
  */
 BranchSprite.prototype.measureDistances = function() {
+	// WARNING: While intertweening is disabled, we have bypassed the empty weight as first key in the array
+	// as at iteration 1 we want to know the distance between point 1 & 2 (so it must be index 1 in the array)
+	
 	let lastPosition = new CoreTypes.Point(0, 0),
 		distance = 0,
 		totalDistance = 0;
@@ -419,7 +422,7 @@ BranchSprite.prototype.measureDistances = function() {
 		lastPosition = position;
 	}, this);
 	
-	this.averageWeights.push(0);
+//	this.averageWeights.push(0);
 	this.distances.forEach(function(distance) {
 		this.averageWeights.push((distance / totalDistance) * this.effectiveStepCount);
 	}, this);

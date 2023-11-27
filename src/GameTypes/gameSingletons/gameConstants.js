@@ -77,10 +77,10 @@ const ThemeDescriptorsFactory = function(
  * @type {{[key:String] : ThemeDescriptorsFactory}}
  */
 const themeDescriptors = {
-	'midi' : new ThemeDescriptorsFactory(
+	'Midi' : new ThemeDescriptorsFactory(
 		0,
-		false,
-		null,
+		true,
+		true,
 		true,
 		true,
 		true,
@@ -99,6 +99,34 @@ const themeDescriptors = {
 		true,
 		null,
 		false,
+		null,
+		[],		// 9
+		null,
+		null,
+		'doubleQuad'
+	),
+	'Whitehouse' : new ThemeDescriptorsFactory(
+		2,
+		null,
+		true,
+		null,
+		null,
+		false,
+		false,
+		true,
+		[],		// 9
+		null,
+		null,
+		'singleQuad'
+	),
+	'SteamSoul' : new ThemeDescriptorsFactory(
+		3,
+		null,
+		true,
+		true,
+		true,
+		null,
+		null,
 		null,
 		[],		// 9
 		null,

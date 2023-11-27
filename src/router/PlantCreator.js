@@ -33,6 +33,16 @@ const DelayedCooledDownWeightedRecurringCallbackTween = require('src/GameTypes/t
 const DelayedOneShotCallbackTween = require('src/GameTypes/tweens/DelayedOneShotCallbackTween');
 const DelayedPropFadeOneShotCallbackTween = require('src/GameTypes/tweens/DelayedPropFadeOneShotCallbackTween');
 
+/*
+ * TODOS:
+ * - condition the animation speed to the theme
+ * - allow not randomizing the fruit sizes
+ * - log the difference between animation-steps and weights
+ * - Make a logo
+ * - Benchmark on another machine
+ * - Re-implment intertweens
+ */
+
 /**
  * @constructor PlantCreator
  * @param {{[key:String]:Array<LayoutNode>}} layoutTree
@@ -41,6 +51,7 @@ const PlantCreator = function(layoutTree) {
 	// @ts-ignore PIXI
 	PIXI.settings.FILTER_RESOLUTION = .5;
 	this.layoutTree = layoutTree;
+	this.themeOptions = themeDescriptors[GameState().currentTheme];
 	 
 	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 	this.shadowFilter = new PIXI.filters.DropShadowFilter({
@@ -53,12 +64,12 @@ const PlantCreator = function(layoutTree) {
 	 
 	/** @type {LayoutNode} */
 	this.rootNode = this.layoutTree['2'][1];
-	this.subInterval = 12;	// speed of the animation
+	this.subInterval = this.themeOptions.curveType === 'doubleQuad' ? 7 : 12;	// speed of the animation
 	/** @type {{[key:String] : Number}} */
 	this.delaysMap = {};
 	
 	this.maxDepth = Object.keys(layoutTree).length;
-	this.themeOptions = themeDescriptors[GameState().currentTheme];
+	
 	this.getRootNode();
 	this.getBranches();
 }
@@ -131,6 +142,7 @@ PlantCreator.prototype.getBranches = function() {
 		leafSprite,
 		fruitSprite,
 		leafTextureName,
+		branchTextureName,
 		randomFruitZoom = 1,
 		localDeltaTime = 0,
 		localDuration = 0,
@@ -166,10 +178,15 @@ PlantCreator.prototype.getBranches = function() {
 					currentOrigin,
 					branchOptions.isReversed
 				);
-				if (currentDepth <= 6)
-					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + branchRoot], branchOptions);
-				else
-					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + branch01], branchOptions);
+				
+				if (currentDepth <= 6) {
+					branchTextureName = !branchOptions.isReversed ? GameState().currentTheme + branchRoot : GameState().currentTheme + branchRoot + 'Reverse'
+					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][branchTextureName], branchOptions);
+				}
+				else {
+					branchTextureName = !branchOptions.isReversed ? GameState().currentTheme + branch01 : GameState().currentTheme + branch01 + 'Reverse'
+					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][branchTextureName], branchOptions);
+				}
 				
 //				console.log(branchSprite.stepCount / branchSprite.effectiveStepCount); //branchSprite.stepCount /
 				
@@ -196,10 +213,14 @@ PlantCreator.prototype.getBranches = function() {
 					branchTween
 				);
 				
-				if (currentDepth <= 4)
-					branchSprite = new BranchSprite(positionEnd, positionContinued, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + branchRoot], branchOptions);
-				else
-					branchSprite = new BranchSprite(positionEnd, positionContinued, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + branch01], branchOptions);
+				if (currentDepth <= 4) {
+					branchTextureName = !branchOptions.isReversed ? GameState().currentTheme + branchRoot : GameState().currentTheme + branchRoot + 'Reverse'
+					branchSprite = new BranchSprite(positionEnd, positionContinued, loadedAssets[themeDescriptors[GameState().currentTheme].id][branchTextureName], branchOptions);
+				}
+				else {
+					branchTextureName = !branchOptions.isReversed ? GameState().currentTheme + branch01 : GameState().currentTheme + branch01 + 'Reverse'
+					branchSprite = new BranchSprite(positionEnd, positionContinued, loadedAssets[themeDescriptors[GameState().currentTheme].id][branchTextureName], branchOptions);
+				}
 				
 				
 				distanceWeightedFactor = this.getDistance(positionEnd, positionContinued) / refDistance;
@@ -271,6 +292,7 @@ PlantCreator.prototype.getBranches = function() {
 					branchSprite.spriteObj.filters.push(this.shadowFilter);
 				}
 				
+				// @ts-ignore : LayoutNode type isn't completely mocked
 				node.canvasShape.shape.filters = Array();
 				if (this.themeOptions.blurNodeBoxes) {
 					// @ts-ignore : PIXI.SimpleRope type isn't completely mocked
@@ -345,7 +367,7 @@ PlantCreator.prototype.getBranches = function() {
 					// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 					fruitSprite.rotation = !branchOptions.isReversed ? -30 : 15;
 					GameLoop().pushTween(
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset - standardFruitFadeDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				
@@ -354,7 +376,7 @@ PlantCreator.prototype.getBranches = function() {
 					node.canvasShape.shape.alpha = 0
 					GameLoop().pushTween(
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset + standardFruitFadeDuration * 1.5, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 				if (themeDescriptors[GameState().currentTheme].dropShadows) {
@@ -384,7 +406,7 @@ PlantCreator.prototype.getBranches = function() {
 					node.canvasShape.shape.alpha = 0
 					GameLoop().pushTween(
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 2, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 3, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 					);
 				}
 			}

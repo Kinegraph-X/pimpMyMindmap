@@ -91,15 +91,21 @@ ComponentsHelper.prototype.defineRootBoundingRect = function() {
 	const menuBar = this.rootViewComponent._children[0];
 	// @ts-ignore too lazy to type callbacks
 	this.menuBarReadyPromise = menuBar.getBoundingBox(function(resolve, e) {
-		// Hack cause the resize observer fire with a false value: take the one olready in DOM
-		if (self.menuYOffset) {
+		var boundingBox = e.data.boundingBox;
+		// Hack cause the resize observer sometimes fires the second time with a false value: take the one already in DOM if its greater
+		if (boundingBox.h < self.menuYOffset) {
 			resolve();
 			return;
 		}
-		var boundingBox = e.data.boundingBox;
+		else if (self.menuYOffset) {
+			self.menuYOffset = boundingBox.h;
+			self.rootBoundingRect.height -= self.menuYOffset;
+			resolve();
+		}
+		// case of first time triggered
 		self.menuYOffset = boundingBox.h;
 		self.rootBoundingRect.height -= self.menuYOffset;
-		resolve();
+		
 	});
 }
 
@@ -195,7 +201,8 @@ ComponentsHelper.prototype.hackyThemeSelectorDecorator = function () {
 		this.themeListSelector.typedSlots[0].push(this.themeListSelector.typedSlots[0].newItem(themeName));
 		
 		span = document.createElement('span');
-		span.textContent = themeName;
+		// @ts-ignore extended native
+		span.textContent = themeName;//.capitalizeFirstChar();
 		opt = this.themeListSelector._children[0]._children[i].view.getWrappingNode();
 		Array.from(opt.childNodes).forEach(function(child) {
 			if (child instanceof Text)
@@ -205,9 +212,9 @@ ComponentsHelper.prototype.hackyThemeSelectorDecorator = function () {
 		
 		img = document.createElement('img');
 		// @ts-ignore callback
-		img.onload = function(idx, optElem, e) {
+		img.onload = function(optElem, e) {
 			optElem.prepend(e.target);	
-		}.bind(null, i, opt)
+		}.bind(null, opt)
 		img.src = thunbnailPath + themeName + thumbnailExt;
 		i++;
 	}

@@ -59,6 +59,9 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.objectType = 'DelayedC
  * @return Void
  */
 DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
+	// WARNING: While intertweening is disabled, we have bypassed the empty weight as first key in the array
+	// as at iteration 1 we want to know the distance between point 1 & 2 (so it must be index 1 in the array)
+	
 	var missedSteps = 0, currentIterationFrameCount = this.interval * this.weights[this.currentIteration];
 	this.lastStepTimestamp = timestamp;
 	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
