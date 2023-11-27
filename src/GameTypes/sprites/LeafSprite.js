@@ -140,9 +140,9 @@ LeafSprite.prototype.movingUpdatePath = function(duration) {
  * @return void
  */
 LeafSprite.prototype.updateAtCurrentStep = function(duration) {
-	for (let i = this.currentStep, l = this.stepCount; i <= l; i++) {
-		this.path[i].x = this.positions[this.currentStep].x.value;
-		this.path[i].y = this.positions[this.currentStep].y.value;
+	for (let i = this.currentStep + 1, l = this.stepCount; i <= l; i++) {
+		this.path[i].x = this.positions[this.currentStep + 1].x.value;
+		this.path[i].y = this.positions[this.currentStep + 1].y.value;
 
 //		GameLoop().pushTween(
 //			new TargetPositionTween(

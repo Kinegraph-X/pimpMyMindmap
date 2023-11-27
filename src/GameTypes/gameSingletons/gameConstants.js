@@ -132,6 +132,20 @@ const themeDescriptors = {
 		null,
 		null,
 		'doubleQuad'
+	),
+	'MindTrip' : new ThemeDescriptorsFactory(
+		4,
+		null,
+		null,
+		true,
+		true,
+		false,
+		false,
+		true,
+		[9],		// 9
+		null,
+		null,
+		'singleQuad'
 	)
 }
 

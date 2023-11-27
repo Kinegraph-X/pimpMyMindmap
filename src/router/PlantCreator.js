@@ -60,7 +60,7 @@ const PlantCreator = function(layoutTree) {
 	});
 	
 	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
-	 this.blurFilter = new PIXI.filters.BlurFilter(21, 1);
+	 this.blurFilter = new PIXI.filters.BlurFilter(64, 1);
 	 
 	/** @type {LayoutNode} */
 	this.rootNode = this.layoutTree['2'][1];

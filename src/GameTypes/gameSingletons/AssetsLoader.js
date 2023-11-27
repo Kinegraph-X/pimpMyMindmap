@@ -119,6 +119,35 @@ const manifest = {
 				
 				{name : 'SteamSoullogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
 			]
+		},
+		{
+			name : 'MindTrip',
+			assets : [
+				{name : 'MindTriproot', srcs : 'plugins/LinkedTree/assets/root_theme_michelin.png'},
+				{name : 'MindTripbranch01', srcs : 'plugins/LinkedTree/assets/branches/branch_theme_michelin.png'},
+				{name : 'MindTripbranchRoot', srcs : 'plugins/LinkedTree/assets/branches/branch_theme_michelin.png'},
+				{name : 'MindTripbranch01Reverse', srcs : 'plugins/LinkedTree/assets/branches/branch_theme_michelin.png'},
+				{name : 'MindTripbranchRootReverse', srcs : 'plugins/LinkedTree/assets/branches/branch_theme_michelin.png'},
+				{name : 'MindTripleaf00', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
+				{name : 'MindTripleaf01', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_02.png'},
+				{name : 'MindTripleaf02', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_02.png'},
+				{name : 'MindTripleaf02Long', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
+				{name : 'MindTripleaf00Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
+				{name : 'MindTripleaf01Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_02.png'},
+				{name : 'MindTripleaf02Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_03.png'},
+				{name : 'MindTripleaf02LongReverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
+				
+				{name : 'MindTripbranchlet00', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_michelin_01.png'},
+				{name : 'MindTripbranchlet01', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_michelin_02.png'},
+				{name : 'MindTripbranchlet02', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_michelin_03.png'},
+				
+				{name : 'MindTripfruit01', srcs : 'plugins/LinkedTree/assets/fruits/fruit_theme_michelin_01.png'},
+				{name : 'MindTripfruit02', srcs : 'plugins/LinkedTree/assets/fruits/fruit_theme_michelin_01.png'},
+
+				{name : 'MindTripthemeBg', srcs : 'plugins/LinkedTree/assets/backgrounds/michelin_theme.png'},
+				
+				{name : 'MindTriplogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
+			]
 		}
 	]
 };
@@ -137,7 +166,9 @@ module.exports = new Promise(function(resolve, reject) {
 				// @ts-ignore
 				PIXI.Assets.loadBundle('Whitehouse'),
 				// @ts-ignore
-				PIXI.Assets.loadBundle('SteamSoul')
+				PIXI.Assets.loadBundle('SteamSoul'),
+				// @ts-ignore
+				PIXI.Assets.loadBundle('MindTrip')
 			]).then(function(loadedAssets) {
 				resolve(loadedAssets);
 			});
