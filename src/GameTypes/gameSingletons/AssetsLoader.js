@@ -134,7 +134,7 @@ const manifest = {
 				{name : 'MindTripleaf02Long', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
 				{name : 'MindTripleaf00Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
 				{name : 'MindTripleaf01Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_02.png'},
-				{name : 'MindTripleaf02Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_03.png'},
+				{name : 'MindTripleaf02Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_02.png'},
 				{name : 'MindTripleaf02LongReverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_michelin_01.png'},
 				
 				{name : 'MindTripbranchlet00', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_michelin_01.png'},

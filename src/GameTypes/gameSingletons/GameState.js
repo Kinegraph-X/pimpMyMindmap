@@ -1,4 +1,4 @@
-
+const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
 
 /**
  * @constructor GameState
@@ -15,7 +15,7 @@ const GameState = function() {
  * @param {Number} value
  */
 GameState.prototype.setRootTimestamp = function(value) {
-	console.log('rootTimestamp set :', value);
+	console.log('rootTimestamp set :', value / GameLoop().firstFramesDuration.chosen, 'frames');
 	this.rootTimestamp = value;
 }
 

@@ -33,12 +33,14 @@ const DelayedCooledDownWeightedRecurringCallbackTween = require('src/GameTypes/t
  */
 const BranchSprite = function(positionStart, positionEnd, texture, options) {
 	Sprite.call(this);
-	this.currentStep = 1;
+	this.currentStep = 0;
 	this.path = Array();
 	this.positionStart = positionStart;
 	this.positionEnd = positionEnd;
+	this.totalDistance = 0;
 	this.options = Object.assign({}, options);
 	
+	this.minDistanceForAimation = 15;
 	if (this.options.curveType === curveTypes.doubleQuad)
 		this.effectiveStepCount = defaultInterpolationStepCount * 2 + 1;
 	else
@@ -186,39 +188,46 @@ BranchSprite.prototype.movingUpdatePath = function(duration) {
 /**
  * @method updateAtCurrentStep
  * @param {Number} duration
+ * @param {Boolean} droppedFrameCatchup
  * @return void
  */
-BranchSprite.prototype.updateAtCurrentStep = function(duration) {
+BranchSprite.prototype.updateAtCurrentStep = function(duration, droppedFrameCatchup) {
 //	if (this.currentStep === 0)
 //		return;
 //	console.log(this.distances[this.currentStep])
-//	if (this.distances[this.currentStep] > 15) {
+	if (!droppedFrameCatchup && this.currentStep < this.effectiveStepCount - 1 && this.distances[this.currentStep] > this.minDistanceForAimation) {
 //		if (this.currentStep > 0)
 //			for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
-//				this.path[i].x = this.positions[this.currentStep - 1].x.value;
-//				this.path[i].y = this.positions[this.currentStep - 1].y.value;
+//				this.path[i].x = this.positions[this.currentStep].x.value;
+//				this.path[i].y = this.positions[this.currentStep].y.value;
 //			}
-//		
-////		console.log(this.currentStep)//, this.positions[this.currentStep]);
-//		GameLoop().pushTween(
-//			new TargetPositionTween(
-//				this.path[this.path.length - 1],
-//				new CoreTypes.Transform(
-//					this.positions[this.currentStep].x.value,
-//					this.positions[this.currentStep].y.value
-//				),
-//				duration
-//			)
-//		);
-//	}
-//	else {
-//	console.log('currentStep', this.currentStep, this.effectiveStepCount);
-	// seems path[end] is not the last point displayed
+		
+//		if (this.UID === '121') {
+//			console.log(duration);
+//		}
+//		console.log(this.currentStep)//, this.positions[this.currentStep]);
 		for (let i = this.currentStep + 1, l = this.effectiveStepCount; i < l; i++) {
-			this.path[i].x = this.positions[this.currentStep + 1].x.value;
-			this.path[i].y = this.positions[this.currentStep + 1].y.value;
+			GameLoop().pushTween(
+				new TargetPositionTween(
+					this.path[i],
+					new CoreTypes.Transform(
+						this.positions[this.currentStep + 1].x.value,
+						this.positions[this.currentStep + 1].y.value
+					),
+					duration
+				)
+			);
 		}
-//	}
+	}
+	else if (this.currentStep > 0 && this.distances[this.currentStep - 1] <= this.minDistanceForAimation) {
+//		if (this.UID === '121')
+//			console.log('currentStep', this.currentStep);
+		// seems path[end] is not the last point displayed
+		for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
+			this.path[i].x = this.positions[this.currentStep].x.value;
+			this.path[i].y = this.positions[this.currentStep].y.value;
+		}
+	}
 }
 
 /**
@@ -408,8 +417,7 @@ BranchSprite.prototype.measureDistances = function() {
 	// as at iteration 1 we want to know the distance between point 1 & 2 (so it must be index 1 in the array)
 	
 	let lastPosition = new CoreTypes.Point(0, 0),
-		distance = 0,
-		totalDistance = 0;
+		distance = 0;
 	
 	this.positions.forEach(function(position) {
 		if (lastPosition.x.value === 0 && lastPosition.y.value === 0) {
@@ -417,14 +425,17 @@ BranchSprite.prototype.measureDistances = function() {
 			return;
 		}
 		distance = Math.hypot(position.x.value - lastPosition.x.value, position.y.value - lastPosition.y.value);
-		totalDistance += distance;
+		this.totalDistance += distance;
 		this.distances.push(distance);
 		lastPosition = position;
 	}, this);
 	
-//	this.averageWeights.push(0);
+//	if (this.UID === '121') {
+//		console.log(this.distances, this.averageWeights);
+//	}
+	this.averageWeights.push(0);
 	this.distances.forEach(function(distance) {
-		this.averageWeights.push((distance / totalDistance) * this.effectiveStepCount);
+		this.averageWeights.push((distance / this.totalDistance) * this.effectiveStepCount);
 	}, this);
 //	console.log(this.averageWeights);
 }

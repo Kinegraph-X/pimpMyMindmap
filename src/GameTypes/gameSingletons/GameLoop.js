@@ -344,6 +344,15 @@ GameLoop.prototype.removeTween = function(tween) {
 	}
 }
 
+/**
+ * @method removeTween
+ * 
+ * Self-explanatory
+ */
+GameLoop.prototype.clearTweens = function() {
+	this.tweens.length = 0;
+}
+
 ///**
 // * @method pushCollisionTest
 // * 

@@ -163,7 +163,8 @@ ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 		alignment
 	);
 	// @ts-ignore App isn't typed
-	new App.DelayedDecoration();
+//	new App.DelayedDecoration();
+	App.Ignition.prototype.cleanRegisters();
 }
 
 
@@ -401,6 +402,7 @@ ComponentsHelper.prototype.resetDebugRenderer = function() {
 }
 
 ComponentsHelper.prototype.resetPlantsRenderer = function() {
+	GameLoop().clearTweens();
 	GameLoop().clearStage();
 }
 
