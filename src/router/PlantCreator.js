@@ -364,7 +364,7 @@ PlantCreator.prototype.getBranches = function() {
 				);
 				
 				if (this.themeOptions.showLeafFruits && this.getRandomFruitAsBool()) {
-					randomFruitZoom = Math.random() / 4 + .75;
+					randomFruitZoom = Math.random() / 4 + .45;
 					fruitSprite = new FruitSprite(
 						new Point(
 							// @ts-ignore : LayoutNode type isn't completely mocked

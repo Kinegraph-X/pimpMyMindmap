@@ -137,7 +137,7 @@ const themeDescriptors = {
 		4,
 		null,
 		null,
-		null,
+		true,
 		true,
 		false,
 		null,
