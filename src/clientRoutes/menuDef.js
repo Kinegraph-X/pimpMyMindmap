@@ -80,7 +80,7 @@ var DevToolsMenu = function(uniqueID, options, model) {
 						{
 							selector : ':host',
 							position : 'absolute',
-							marginLeft : '19%'
+							marginLeft : '23%'
 						}
 					],
 					props : [
@@ -96,7 +96,7 @@ var DevToolsMenu = function(uniqueID, options, model) {
 						{
 							selector : ':host',
 							position : 'absolute',
-							marginLeft : '60%'
+							marginLeft : '55%'
 						}
 					],
 					props : [
