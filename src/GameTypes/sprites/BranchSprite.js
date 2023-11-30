@@ -40,7 +40,7 @@ const BranchSprite = function(positionStart, positionEnd, texture, options) {
 	this.totalDistance = 0;
 	this.options = Object.assign({}, options);
 	
-	this.minDistanceForAimation = 15;
+	this.minDistanceForAnimation = this.defaultMinDistanceForAnimation;
 	if (this.options.curveType === curveTypes.doubleQuad)
 		this.effectiveStepCount = defaultInterpolationStepCount * 2 + 1;
 	else
@@ -195,7 +195,7 @@ BranchSprite.prototype.updateAtCurrentStep = function(duration, droppedFrameCatc
 //	if (this.currentStep === 0)
 //		return;
 //	console.log(this.distances[this.currentStep])
-	if (!droppedFrameCatchup && this.currentStep < this.effectiveStepCount - 1 && this.distances[this.currentStep] > this.minDistanceForAimation) {
+	if (!droppedFrameCatchup && this.currentStep < this.effectiveStepCount - 1 && this.distances[this.currentStep] > this.minDistanceForAnimation) {
 //		if (this.currentStep > 0)
 //			for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
 //				this.path[i].x = this.positions[this.currentStep].x.value;
@@ -219,7 +219,7 @@ BranchSprite.prototype.updateAtCurrentStep = function(duration, droppedFrameCatc
 			);
 		}
 	}
-	else if (this.currentStep > 0 && this.distances[this.currentStep - 1] <= this.minDistanceForAimation) {
+	else if (this.currentStep > 0 && this.distances[this.currentStep - 1] <= this.minDistanceForAnimation) {
 //		if (this.UID === '121')
 //			console.log('currentStep', this.currentStep);
 		// seems path[end] is not the last point displayed
@@ -249,7 +249,9 @@ BranchSprite.prototype.getRefPositions = function() {
 			? middleHorizontalOffset
 			: 0;
 	let verticalOffset = Math.round((this.positionEnd.y.value - this.positionStart.y.value) / 2) + 1,	// + 1 => avoid dividing by zero
-		verticalControlOffset = (verticalOffset / Math.abs(verticalOffset)) * Math.abs(horizontalOffset);
+		verticalControlOffset = Math.abs(this.positionEnd.y.value - this.positionStart.y.value) > Math.abs(horizontalOffset) * 3 
+			? (verticalOffset / Math.abs(verticalOffset)) * Math.abs(horizontalOffset)
+			: verticalOffset;
 	
 	if (this.options.curveType === curveTypes.singleQuad)
 		return [
@@ -383,31 +385,6 @@ BranchSprite.prototype.getRandomBranchlet = function(count) {
 	return Math.abs(Math.floor(Math.random() * count - .0001)).toString();
 }
 
-
-/**
- * @static {CoreTypes.Dimension} defaultSpaceShipDimensions
- */
-BranchSprite.prototype.defaultDimensions = new CoreTypes.Dimension(
-	99,
-	32
-);
-
-/**
- * @static {String} spriteCallbackName
- */
-BranchSprite.prototype.spriteCallbackName = 'getNextStepForPath';
-
-
-/**
- * @static {String} branchLetNameConstant
- */
-BranchSprite.prototype.branchLetNameConstant = 'branchlet0';
-
-/**
- * @static @method noOp
- */
-BranchSprite.prototype.noOp = function() {}
-
 /**
  * @method measureDistances
  * LATE-INITIALISATION of BranchSprite.prototype.averageWeights
@@ -447,6 +424,49 @@ BranchSprite.prototype.updateAverageWeights = function() {
 	this.averageWeights.length = 0;
 	this.measureDistances();
 }
+
+/**
+ * @static @method isBigBranch
+ */
+BranchSprite.prototype.isBigBranch = function() {
+	this.minDistanceForAnimation = this.defaultMinDistanceForBigAnimation;
+}
+
+
+
+/**
+ * @static {CoreTypes.Dimension} defaultSpaceShipDimensions
+ */
+BranchSprite.prototype.defaultDimensions = new CoreTypes.Dimension(
+	99,
+	32
+);
+
+/**
+ * @static {String} spriteCallbackName
+ */
+BranchSprite.prototype.spriteCallbackName = 'getNextStepForPath';
+
+
+/**
+ * @static {String} branchLetNameConstant
+ */
+BranchSprite.prototype.branchLetNameConstant = 'branchlet0';
+
+/**
+ * @static {Number} defaultMinDistanceForAnimation
+ */
+BranchSprite.prototype.defaultMinDistanceForAnimation = 15;
+
+/**
+ * @static {Number} defaultMinDistanceForBigAnimation
+ */
+BranchSprite.prototype.defaultMinDistanceForBigAnimation = 200;
+
+/**
+ * @static @method noOp
+ */
+BranchSprite.prototype.noOp = function() {}
 
 
 

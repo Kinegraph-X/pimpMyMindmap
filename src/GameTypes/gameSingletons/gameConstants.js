@@ -137,15 +137,29 @@ const themeDescriptors = {
 		4,
 		null,
 		null,
-		true,
+		null,
 		true,
 		false,
-		false,
+		null,
 		true,
-		[9],		// 9
+		[10],		// 9
 		null,
 		null,
 		'singleQuad'
+	),
+	'24H du Mind' : new ThemeDescriptorsFactory(
+		5,
+		null,
+		true,
+		true,
+		true,
+		null,
+		false,
+		null,
+		[0],		// 9
+		null,
+		null,
+		'doubleQuad'
 	)
 }
 

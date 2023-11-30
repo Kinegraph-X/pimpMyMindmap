@@ -350,6 +350,16 @@ module.exports = JSON.parse`{
                                     },
                                     "root": false,
                                     "expanded": true
+                                },
+                                {
+                                    "id": "b6a4d326-6367-4437-82b3-6f39be215cf9",
+                                    "topic": "Gestion des erreurs de validation li\\u00e9es au champ « poids »",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
                                 }
                             ],
                             "extra": {
@@ -722,6 +732,47 @@ module.exports = JSON.parse`{
             "expanded": true
         },
         {
+            "id": "f33da2ff-a3b5-431b-8341-2d5441e8d59f",
+            "topic": "D\\u00e9ploiement du serveur de Krokettes",
+            "children": [
+                {
+                    "id": "5da11de7-7e8a-4471-b8c2-b4be86f36627",
+                    "topic": "Choix de l'environnement de d\\u00e9ploiement",
+                    "children": [],
+                    "extra": {
+                        "is_map_root": false
+                    },
+                    "root": false,
+                    "expanded": true
+                },
+                {
+                    "id": "d953ebfd-5b8d-4f57-99ea-2db97995d063",
+                    "topic": "Configuration du serveur de production",
+                    "children": [],
+                    "extra": {
+                        "is_map_root": false
+                    },
+                    "root": false,
+                    "expanded": true
+                },
+                {
+                    "id": "f7213d93-a2ab-4d76-8be9-093761c7dc2c",
+                    "topic": "Mise en place de la s\\u00e9curit\\u00e9",
+                    "children": [],
+                    "extra": {
+                        "is_map_root": false
+                    },
+                    "root": false,
+                    "expanded": true
+                }
+            ],
+            "extra": {
+                "is_map_root": false
+            },
+            "root": false,
+            "expanded": true
+        },
+        {
             "id": "6f0ee9e7-d425-49b3-937a-e840bd4ad975",
             "topic": "Conclusion",
             "children": [
@@ -806,6 +857,16 @@ module.exports = JSON.parse`{
                             "topic": "Int\\u00e9gration de la plateforme de paiement « Chat-pott\\u00e9 »",
                             "children": [
                                 {
+                                    "id": "450eefdf-6e2f-4751-893c-69f2f79ebbbf",
+                                    "topic": "Pr\\u00e9sentation de la plateforme de paiement « Chat-pott\\u00e9 »",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
                                     "id": "0a40381a-e1fc-4433-aa56-0c03d22a76ec",
                                     "topic": "Configuration de l'int\\u00e9gration avec le serveur de Krokettes",
                                     "children": [],
@@ -818,6 +879,16 @@ module.exports = JSON.parse`{
                                 {
                                     "id": "4a22ae9a-d5fd-49a6-a270-f540bcdc6f80",
                                     "topic": "Utilisation des API de la plateforme pour les transactions en Ron-Ron-Coins",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "19c86c17-5199-498d-ae20-582d20ace11e",
+                                    "topic": "Gestion des erreurs et des exceptions li\\u00e9es aux transactions",
                                     "children": [],
                                     "extra": {
                                         "is_map_root": false
@@ -859,6 +930,160 @@ module.exports = JSON.parse`{
                                 {
                                     "id": "92cdd268-7f4f-4cf3-9554-89e092fc06cc",
                                     "topic": "Authentification et autorisation des utilisateurs pour les transactions",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "4a20808b-c12a-4e58-be07-413d48618a47",
+                                    "topic": "Gestion des erreurs de s\\u00e9curit\\u00e9 li\\u00e9es aux transactions de conversion",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                }
+                            ],
+                            "extra": {
+                                "is_map_root": false
+                            },
+                            "root": false,
+                            "expanded": true
+                        }
+                    ],
+                    "extra": {
+                        "is_map_root": false
+                    },
+                    "root": false,
+                    "expanded": true
+                },
+                {
+                    "id": "fb796c9f-36b2-4863-b9d6-ae80873bff2a",
+                    "topic": "Paiement ven \\u00e9moticones via la plateforme « Chat-pott\\u00e9 »",
+                    "children": [
+                        {
+                            "id": "cc003286-6bf2-4da6-9734-2c9902b0cd37",
+                            "topic": "M\\u00e9canisme de paiement en \\u00e9moticones",
+                            "children": [
+                                {
+                                    "id": "037e53b0-2492-4600-94fb-0f7897506ef1",
+                                    "topic": "Explication du concept de paiement en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "ac209c01-f431-4fe8-8cc0-440d173d6fcb",
+                                    "topic": "R\\u00e8gles et fonctionnement du paiement en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                }
+                            ],
+                            "extra": {
+                                "is_map_root": false
+                            },
+                            "root": false,
+                            "expanded": true
+                        },
+                        {
+                            "id": "27e5aa2a-770c-4cc6-a1bd-6de832ce7d44",
+                            "topic": "Int\\u00e9gration de la plateforme de paiement « Chat-pott\\u00e9 »",
+                            "children": [
+                                {
+                                    "id": "dddd1439-58cd-4b10-a3e4-6b4f2662e08b",
+                                    "topic": "Pr\\u00e9sentation de la plateforme de paiement « Chat-pott\\u00e9 »",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "12377882-c23a-4daf-9afe-27f8dbc6adcf",
+                                    "topic": "Configuration de l'int\\u00e9gration avec le serveur de Krokettes",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "1710b88a-03ca-4ad7-b474-b24bb8a7370e",
+                                    "topic": "Utilisation des API de la plateforme pour les transactions en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "9403cd50-3366-4dd9-97ee-248dc2d84923",
+                                    "topic": "Gestion des erreurs et des exceptions li\\u00e9es aux transactions en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                }
+                            ],
+                            "extra": {
+                                "is_map_root": false
+                            },
+                            "root": false,
+                            "expanded": true
+                        },
+                        {
+                            "id": "34c30df8-08ff-4efb-81d2-f5bf2ebc9a1b",
+                            "topic": "S\\u00e9curit\\u00e9 des transactions de paiement en \\u00e9moticones",
+                            "children": [
+                                {
+                                    "id": "fdde4a25-8559-4f21-b2d6-0ee1a2a7ede9",
+                                    "topic": "M\\u00e9canismes de s\\u00e9curit\\u00e9 mis en place pour les transactions en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "a3280aa0-7b1e-43e6-b335-d6edc26beaac",
+                                    "topic": "Chiffrement des donn\\u00e9es sensibles li\\u00e9es aux transactions en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "a3bba2da-7724-4ddc-8ab8-09ad8d38fd7d",
+                                    "topic": "Authentification et autorisation des utilisateurs pour les transactions en \\u00e9moticones",
+                                    "children": [],
+                                    "extra": {
+                                        "is_map_root": false
+                                    },
+                                    "root": false,
+                                    "expanded": true
+                                },
+                                {
+                                    "id": "93695260-92b3-46c2-a7d6-6e28e63b0697",
+                                    "topic": "Gestion des erreurs de s\\u00e9curit\\u00e9 li\\u00e9es aux transactions en \\u00e9moticones",
                                     "children": [],
                                     "extra": {
                                         "is_map_root": false

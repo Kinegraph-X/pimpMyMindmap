@@ -35,12 +35,10 @@ const DelayedPropFadeOneShotCallbackTween = require('src/GameTypes/tweens/Delaye
 
 /*
  * TODOS:
- * - condition the animation speed to the theme
+ * - fallback on a more stepped-animation when the map is huge (pass mapSize = 'medium', or mapSize = 'big' in a first implem)
  * - allow not randomizing the fruit sizes
- * - log the difference between animation-steps and weights
  * - Make a logo
  * - Benchmark on another machine
- * - Re-implment intertweens
  */
 
 /**
@@ -55,16 +53,17 @@ const PlantCreator = function(layoutTree) {
 	 
 	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 	this.shadowFilter = new PIXI.filters.DropShadowFilter({
-		alpha : .4,
-		distance : 15
+		alpha : .55,
+		distance : 19
 	});
 	
 	// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
-	 this.blurFilter = new PIXI.filters.BlurFilter(64, 1);
+	 this.blurFilter = new PIXI.filters.BlurFilter(16, 1);
 	 
 	/** @type {LayoutNode} */
 	this.rootNode = this.layoutTree['2'][1];
 	this.subInterval = this.themeOptions.curveType === 'doubleQuad' ? 7 : 12;	// speed of the animation
+	this.maxDistanceBeforeIntertweenBypass = 2500;
 	/** @type {{[key:String] : Number}} */
 	this.delaysMap = {};
 	
@@ -93,17 +92,27 @@ PlantCreator.prototype.getRootNode = function() {
 		duration : 10		// let's take a big margin... "1" should be enough
 	};
 	rootSprite.spriteObj.filters = [this.shadowFilter];
+	if (this.themeOptions.blurNodeBoxes) {
+		// @ts-ignore : LayoutNode type isn't completely mocked
+		this.rootNode.canvasShape.shape.filters = [this.blurFilter];
+	}
+	
 	GameLoop().addSpriteToScene(
 		rootSprite
 	);
 	
 	if (this.themeOptions.showRootBox) {
-		// @ts-ignore : LayoutNode type isn't completely mocked
-		this.rootNode.canvasShape.shape.alpha = 0;
-		GameLoop().unshiftTween(
-			// @ts-ignore  LayoutNode type isn't completely mocked
-			new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, 'addChild', 0, [this.rootNode.canvasShape.shape], null, null, this.rootNode.canvasShape.shape, 'alpha', 1, this.subInterval)
-		);
+		if (GameState().animableState) {
+			// @ts-ignore : LayoutNode type isn't completely mocked
+			this.rootNode.canvasShape.shape.alpha = 0;
+			GameLoop().unshiftTween(
+				// @ts-ignore  LayoutNode type isn't completely mocked
+				new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, 'addChild', 0, [this.rootNode.canvasShape.shape], null, null, this.rootNode.canvasShape.shape, 'alpha', 1, this.subInterval)
+			);
+		}
+		else
+			// @ts-ignore : LayoutNode type isn't completely mocked
+			GameLoop().stage.addChild(this.rootNode.canvasShape.shape);
 	}
 }
  
@@ -188,6 +197,9 @@ PlantCreator.prototype.getBranches = function() {
 					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][branchTextureName], branchOptions);
 				}
 				
+				if (branchSprite.totalDistance > this.maxDistanceBeforeIntertweenBypass)
+					branchSprite.isBigBranch();
+				
 //				console.log(branchSprite.stepCount / branchSprite.effectiveStepCount); //branchSprite.stepCount /
 				
 //				console.log(node._UID)
@@ -270,20 +282,29 @@ PlantCreator.prototype.getBranches = function() {
 						fruitSprite.spriteObj.filters = [this.shadowFilter];
 					}
 					
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					fruitSprite.alpha = 0
-					GameLoop().unshiftTween(
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
-					);
+					if (GameState().animableState) {
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						fruitSprite.alpha = 0
+						GameLoop().unshiftTween(
+							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
+						);
+					}
+					else
+						GameLoop().addSpriteToScene(fruitSprite);
 				}
 				
 				if (this.themeOptions.showNodeBox) {
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					node.canvasShape.shape.alpha = 0
-					GameLoop().unshiftTween(
+					if (GameState().animableState) {
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration + standardFruitFadeDuration * 2, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
-					);
+						node.canvasShape.shape.alpha = 0
+						GameLoop().unshiftTween(
+							// @ts-ignore : LayoutNode type isn't completely mocked
+							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration + standardFruitFadeDuration * 2, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+						);
+					}
+					else
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						GameLoop().stage.addChild(node.canvasShape.shape);
 				}
 				
 				// @ts-ignore : PIXI.SimpleRope type isn't completely mocked
@@ -339,10 +360,10 @@ PlantCreator.prototype.getBranches = function() {
 					leafSprite
 				);
 				GameLoop().unshiftTween(
-					new DelayedCooledDownWeightedRecurringCallbackTween(leafSprite, spriteCallbackName, this.subInterval, leafSprite.stepCount, localDeltaTime)
+					new DelayedCooledDownWeightedRecurringCallbackTween(leafSprite, spriteCallbackName, this.subInterval, leafSprite.animationTriggersCount, localDeltaTime)
 				);
 				
-				if (this.themeOptions.showLeafFruits) {
+				if (this.themeOptions.showLeafFruits && this.getRandomFruitAsBool()) {
 					randomFruitZoom = Math.random() / 4 + .75;
 					fruitSprite = new FruitSprite(
 						new Point(
@@ -363,26 +384,44 @@ PlantCreator.prototype.getBranches = function() {
 						fruitSprite.spriteObj.filters = [this.shadowFilter];
 					}
 					
-					// @ts-ignore : TS doesn't understand anything to prototypal inheritance
-					fruitSprite.alpha = 0;
-					// @ts-ignore : TS doesn't understand anything to prototypal inheritance
-					fruitSprite.rotation = !branchOptions.isReversed ? -30 : 15;
-					GameLoop().unshiftTween(
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset - standardFruitFadeDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
-					);
+					if (GameState().animableState) {
+						// @ts-ignore : TS doesn't understand anything to prototypal inheritance
+						fruitSprite.alpha = 0;
+						// @ts-ignore : TS doesn't understand anything to prototypal inheritance
+						fruitSprite.rotation = !branchOptions.isReversed ? -30 : 15;
+						GameLoop().unshiftTween(
+							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset - standardFruitFadeDuration, [fruitSprite.spriteObj], null, null, fruitSprite.spriteObj, alphaPropName, 1, standardFruitFadeDuration)
+						);
+					}
+					else
+						GameLoop().addSpriteToScene(fruitSprite);
 				}
 				
 				if (this.themeOptions.showLeafBox) {
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					node.canvasShape.shape.alpha = 0
-					GameLoop().unshiftTween(
+					if (GameState().animableState) {
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset + standardFruitFadeDuration * 1.5, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
-					);
+						node.canvasShape.shape.alpha = 0
+						GameLoop().unshiftTween(
+							// @ts-ignore : LayoutNode type isn't completely mocked
+							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset + standardFruitFadeDuration * 1.5, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+						);
+					}
+					else
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						GameLoop().stage.addChild(node.canvasShape.shape);
 				}
 				if (themeDescriptors[GameState().currentTheme].dropShadows) {
 					// @ts-ignore : PIXI.SimpleRope type isn't completely mocked
 					leafSprite.spriteObj.filters = [this.shadowFilter];
+				}
+				
+				// @ts-ignore : LayoutNode type isn't completely mocked
+				node.canvasShape.shape.filters = Array();
+				if (this.themeOptions.blurNodeBoxes) {
+					// @ts-ignore : PIXI.SimpleRope type isn't completely mocked
+					node.canvasShape.shape.filters.push(this.blurFilter);
+					// @ts-ignore : PIXI isn't realy mocked
+					node.canvasShape.shape.blendMode = PIXI.BLEND_MODES.ADD;
 				}
 			}
 			else if (node.nodeName === textNodeName || node.nodeName === subTextNodeName) {
@@ -392,23 +431,33 @@ PlantCreator.prototype.getBranches = function() {
 					localDeltaTime = this.delaysMap[node._parent._parent._UID].offset;
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					localDuration = this.delaysMap[node._parent._parent._UID].duration;
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					node.canvasShape.shape.alpha = 0
-					GameLoop().unshiftTween(
+					if (GameState().animableState) {
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 4, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
-					);
+						node.canvasShape.shape.alpha = 0
+						GameLoop().unshiftTween(
+							// @ts-ignore : LayoutNode type isn't completely mocked
+							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 4, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+						);
+					}
+					else
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						GameLoop().stage.addChild(node.canvasShape.shape);
 				}
 				// @ts-ignore : LayoutNode type isn't completely mocked
 				else if (node._parent.nodeName === leafNodeName) {
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					localDeltaTime = this.delaysMap[node._parent._UID].offset;
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					node.canvasShape.shape.alpha = 0
-					GameLoop().unshiftTween(
+					if (GameState().animableState) {
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 3, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
-					);
+						node.canvasShape.shape.alpha = 0
+						GameLoop().unshiftTween(
+							// @ts-ignore : LayoutNode type isn't completely mocked
+							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 3, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+						);
+					}
+					else
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						GameLoop().stage.addChild(node.canvasShape.shape);
 				}
 			}
 		}, this);
@@ -537,6 +586,13 @@ PlantCreator.prototype.getDistance = function(startPosition, endPosition) {
  */
 PlantCreator.prototype.getRandomLeaf = function(count) {
 	return Math.abs(Math.floor(Math.random() * count - .0001)).toString();
+}
+
+/**
+ * @method getRandomLeaf
+ */
+PlantCreator.prototype.getRandomFruitAsBool = function() {
+	return Math.random() > .4;
 }
 
 

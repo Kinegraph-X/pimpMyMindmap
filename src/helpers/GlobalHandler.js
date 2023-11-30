@@ -34,6 +34,7 @@ const linkedTreeData = require('src/clientRoutes/mapData');	//  _problem  _parti
  * @param {String} initialMapData // JSON
  */
 const GlobalHandler = function(rootNodeSelector, initialMapData) {
+	GameState().animableState = this.getNoAnimationParam();
 	this.loadingSpinner;
 	this.getLoadingSpinner();
 	this.startLoadingSpinner();
@@ -64,12 +65,19 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	
 	this.apiHelper.subscribeToMapListEndpoint(this.componentsHelper.mapListSelector);
 	
-	this.componentsHelper.handleNewMapData(this.mapData, this.alignment);
+//	this.componentsHelper.handleNewMapData(this.mapData, this.alignment);
 	this.appendGameView();
-//	this.stopLoadingSpinner();
-	GameLoop().start();
 }
 //GlobalHandler.prototype = {}
+
+
+GlobalHandler.prototype.getNoAnimationParam = function() {
+	// ANIMATION BYPASS VIA URL
+	if (location.href.match(/no_animation/)) {
+		return false;
+	}
+	return true;
+}
 
 GlobalHandler.prototype.appendGameView = function() {
 	document.querySelector(this.rootNodeSelector).prepend(this.componentsHelper.gameCanvas);
@@ -80,7 +88,7 @@ GlobalHandler.prototype.getLoadingSpinner = function() {
 	const readyElem = document.querySelector('#ready');
 	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
 	readyElem.style.visibility = 'visible';
-	this.loadingSpinner = document.querySelector('#loading_spinner_2');
+	this.loadingSpinner = document.querySelector('#loading_spinner_3');
 	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
 	this.loadingSpinner.style.display = 'flex';
 	const loadingText = document.createElement('span');
@@ -109,9 +117,9 @@ GlobalHandler.prototype.hookKeyboard = function() {
 		if (keyCode === KeyboardEvents.indexOf('Q') && ctrlKey) {
 			GameLoop().stop();
 		}
-		if (keyCode === KeyboardEvents.indexOf('SPACE')) {
-			GameState().setRootTimestamp(GameLoop().currentTime);
-		}
+//		if (keyCode === KeyboardEvents.indexOf('SPACE')) {
+//			GameState().setRootTimestamp(GameLoop().currentTime);
+//		}
 		if (keyCode === KeyboardEvents.indexOf('E') && ctrlKey) {
 			originalEvent.preventDefault();
 			GameLoop().stop();
@@ -150,7 +158,8 @@ GlobalHandler.prototype.getInitialTheme = function() {
 	/** @type {Array<String>} */
 	let themeMatch,
 		theme = '';
-	if ((themeMatch = location.href.match(/theme=(.*)$/))) {
+		
+	if ((themeMatch = decodeURI(location.href).match(/theme=((.|\s)*)$/))) {
 		theme = themeDescriptors.hasOwnProperty(themeMatch[1]) && themeMatch[1];
 	}
 	return theme || this.defaultTheme;
@@ -223,7 +232,7 @@ GlobalHandler.prototype.handleNewLayout = function(e) {
 /**
  * @property @static {String} defaultTheme
  */
-GlobalHandler.prototype.defaultTheme = '80s'; 	// midi 
+GlobalHandler.prototype.defaultTheme = '24H du Mind'; 	// midi 
 
 
 

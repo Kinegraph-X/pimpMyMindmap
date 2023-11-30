@@ -80,6 +80,8 @@ const ComponentsHelper = function() {
 }
 ComponentsHelper.prototype = Object.create(EventEmitter.prototype);
 
+
+
 /**
  * @method defineRootBoundingRect
  */
@@ -409,6 +411,8 @@ ComponentsHelper.prototype.resetPlantsRenderer = function() {
 ComponentsHelper.prototype.centerCanvas = function() {
 	var self = this;
 	this.menuBarReadyPromise.then(function() {
+		windowSize.x.value = window.innerWidth;
+		windowSize.y.value = window.innerHeight;
 		let windowY = windowSize.y.value - self.menuYOffset,
 			zoomFactor = 1, centeringOffsetX = 0, centeringOffsetY = 0;
 		const canvasDimensions = {
@@ -416,7 +420,8 @@ ComponentsHelper.prototype.centerCanvas = function() {
 			y : self.layoutRes.finalViewportHeight
 		};
 		
-		if (canvasDimensions.x - windowSize.x.value > canvasDimensions.y - windowY) {
+//		console.log(canvasDimensions.x, windowSize.x.value, canvasDimensions.y, windowY, canvasDimensions.x - windowSize.x.value, canvasDimensions.y - windowY);
+		if (canvasDimensions.x / canvasDimensions.y > windowSize.x.value / windowY) {
 			zoomFactor = windowSize.x.value / canvasDimensions.x;
 			centeringOffsetY = (windowY - canvasDimensions.y * zoomFactor) / 2 + self.menuYOffset;
 		}
@@ -428,8 +433,8 @@ ComponentsHelper.prototype.centerCanvas = function() {
 		
 	//	console.log(windowSize.x, canvasDimensions.x, zoomFactor, centeringOffsetX);
 		self.gameCanvas.style.transform = `scale(${zoomFactor}, ${zoomFactor})`; //  translateX(${-canvasDimensions.x * zoomFactor / 2}px)
-		self.gameCanvas.style.marginLeft = '-' + (canvasDimensions.x * (1 - zoomFactor) / 2 - centeringOffsetX).toString() + 'px';
-		self.gameCanvas.style.marginTop = '-' + (canvasDimensions.y * (1 - zoomFactor) / 2 - centeringOffsetY).toString() + 'px';
+		self.gameCanvas.style.marginLeft = (-canvasDimensions.x * (1 - zoomFactor) / 2 + centeringOffsetX).toString() + 'px';
+		self.gameCanvas.style.marginTop = (-canvasDimensions.y * (1 - zoomFactor) / 2 + centeringOffsetY).toString() + 'px';
 	})
 }
 

@@ -50,7 +50,7 @@ BgSprite.prototype.getSprite = function(texture) {
 BgSprite.prototype.centerOnCanvas = function(canvasDimensions) {
 	let zoomFactor = 1, centeringOffsetX = 0, centeringOffsetY = 0;
 		
-		if (canvasDimensions.x.value - this.defaultDimensions.x.value > canvasDimensions.y.value - this.defaultDimensions.y.value) {
+		if (canvasDimensions.x.value / canvasDimensions.y.value >  this.defaultDimensions.x.value / this.defaultDimensions.y.value) {
 			zoomFactor = canvasDimensions.x.value / this.defaultDimensions.x.value;
 			centeringOffsetY = (canvasDimensions.y.value - this.defaultDimensions.y.value * zoomFactor) / 2;
 		}

@@ -148,6 +148,35 @@ const manifest = {
 				
 				{name : 'MindTriplogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
 			]
+		},
+		{
+			name : '24H du Mind',
+			assets : [
+				{name : '24H du Mindroot', srcs : 'plugins/LinkedTree/assets/root_theme_24H.png'},
+				{name : '24H du Mindbranch01', srcs : 'plugins/LinkedTree/assets/branches/branch_01_theme_24H.png'},
+				{name : '24H du MindbranchRoot', srcs : 'plugins/LinkedTree/assets/branches/branch_root_theme_24H.png'},
+				{name : '24H du Mindbranch01Reverse', srcs : 'plugins/LinkedTree/assets/branches/branch_01_theme_24H.png'},
+				{name : '24H du MindbranchRootReverse', srcs : 'plugins/LinkedTree/assets/branches/branch_root_theme_24H.png'},
+				{name : '24H du Mindleaf00', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_01.png'},
+				{name : '24H du Mindleaf01', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_02.png'},
+				{name : '24H du Mindleaf02', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_03.png'},
+				{name : '24H du Mindleaf02Long', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_01.png'},
+				{name : '24H du Mindleaf00Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_01_reverse.png'},
+				{name : '24H du Mindleaf01Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_02_reverse.png'},
+				{name : '24H du Mindleaf02Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_03_reverse.png'},
+				{name : '24H du Mindleaf02LongReverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_24H_01_reverse.png'},
+				
+				{name : '24H du Mindbranchlet00', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_24H_01.png'},
+				{name : '24H du Mindbranchlet01', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_24H_01.png'},
+				{name : '24H du Mindbranchlet02', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_24H_01.png'},
+				
+				{name : '24H du Mindfruit01', srcs : 'plugins/LinkedTree/assets/fruits/fruit_theme_24H_01.png'},
+				{name : '24H du Mindfruit02', srcs : 'plugins/LinkedTree/assets/fruits/fruit_theme_24H_02.png'},
+
+				{name : '24H du MindthemeBg', srcs : 'plugins/LinkedTree/assets/backgrounds/24H_theme.png'},
+				
+				{name : '24H du Mindlogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
+			]
 		}
 	]
 };
@@ -168,7 +197,9 @@ module.exports = new Promise(function(resolve, reject) {
 				// @ts-ignore
 				PIXI.Assets.loadBundle('SteamSoul'),
 				// @ts-ignore
-				PIXI.Assets.loadBundle('MindTrip')
+				PIXI.Assets.loadBundle('MindTrip'),
+				// @ts-ignore
+				PIXI.Assets.loadBundle('24H du Mind')
 			]).then(function(loadedAssets) {
 				resolve(loadedAssets);
 			});

@@ -41,6 +41,10 @@ const LeafSprite = function(positionStart, positionEnd, texture, options) {
 	this.options = Object.assign({}, options);
 	this.effectiveStepCount = this.stepCount;
 	
+	this.minDistanceForAnimation = this.defaultMinDistanceForAnimation;
+	this.effectiveStepCount = this.stepCount + 1;
+	this.animationTriggersCount = this.effectiveStepCount;		// we update to position[24] on step 23 (=> don't call me on step 24) 
+	
 	this.refPositions = this.getRefPositions();
 	this.positions = Array();
 	
@@ -137,13 +141,14 @@ LeafSprite.prototype.movingUpdatePath = function(duration) {
 /**
  * @method updateAtCurrentStep
  * @param {Number} duration
+ * @param {Boolean} droppedFrameCatchup
  * @return void
  */
-LeafSprite.prototype.updateAtCurrentStep = function(duration) {
-	for (let i = this.currentStep + 1, l = this.stepCount; i <= l; i++) {
-		this.path[i].x = this.positions[this.currentStep + 1].x.value;
-		this.path[i].y = this.positions[this.currentStep + 1].y.value;
-
+LeafSprite.prototype.updateAtCurrentStep = function(duration, droppedFrameCatchup) {
+//	for (let i = this.currentStep + 1, l = this.stepCount; i <= l; i++) {
+//		this.path[i].x = this.positions[this.currentStep + 1].x.value;
+//		this.path[i].y = this.positions[this.currentStep + 1].y.value;
+//
 //		GameLoop().pushTween(
 //			new TargetPositionTween(
 //				this.path[i],
@@ -154,6 +159,27 @@ LeafSprite.prototype.updateAtCurrentStep = function(duration) {
 //				duration
 //			)
 //		);
+//	}
+
+	if (!droppedFrameCatchup && this.currentStep < this.effectiveStepCount - 1) {
+		for (let i = this.currentStep + 1, l = this.effectiveStepCount; i < l; i++) {
+			GameLoop().pushTween(
+				new TargetPositionTween(
+					this.path[i],
+					new CoreTypes.Transform(
+						this.positions[this.currentStep + 1].x.value,
+						this.positions[this.currentStep + 1].y.value
+					),
+					duration
+				)
+			);
+		}
+	}
+	else if (this.currentStep > 0) {
+		for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
+			this.path[i].x = this.positions[this.currentStep].x.value;
+			this.path[i].y = this.positions[this.currentStep].y.value;
+		}
 	}
 }
 
@@ -306,6 +332,16 @@ LeafSprite.prototype.spriteCallbackName = 'getNextStepForPath';
  * @static {String} branchLetNameConstant
  */
 LeafSprite.prototype.branchLetNameConstant = 'branchlet0';
+
+/**
+ * @static {Number} defaultMinDistanceForAnimation
+ */
+LeafSprite.prototype.defaultMinDistanceForAnimation = 15;
+
+/**
+ * @static {Number} defaultMinDistanceForBigAnimation
+ */
+LeafSprite.prototype.defaultMinDistanceForBigAnimation = 200;
 
 /**
  * @static @method noOp

@@ -52,14 +52,18 @@ var DevToolsMenu = function(uniqueID, options, model) {
 					type : 'SimpleText',
 					nodeName : 'app-title',
 					props : [
-						{text : "Pimp My MindMap"}
+						{text : ""}
 					],
 					sWrapper : CreateStyle([
 						{
 							selector : ':host',
-							color : '#CCCCCC',							// 2da4be
-							fontSize : '20px',
-							paddingRight : '34px'
+							backgroundImage : 'url("plugins/LinkedTree/assets/site_title.png")',
+							backgroundRepeat : 'no-repeat',
+//							color : '#CCCCCC',							// 2da4be
+//							fontSize : '20px',
+//							paddingRight : '34px'
+							width : '250px',
+							height : '40px',
 						},
 						{
 							selector : ':host span',

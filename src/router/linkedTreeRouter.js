@@ -78,12 +78,16 @@ var classConstructor = function() {
 		 * you must pass a custom test string to the load method.
 		 * (here, null) 
 		 */
+		const globalHandler = new GlobalHandler(
+			rootNodeSelector,
+			document.querySelector('#map_data').textContent
+		);
 		(new FontFaceObserver('roboto')).load(null, 10000).then(function() {
 			AssetsLoader.then(function() {
-				new GlobalHandler(
-					rootNodeSelector,
-					document.querySelector('#map_data').textContent
-				)
+				globalHandler.componentsHelper.handleNewMapData(globalHandler.mapData, globalHandler.alignment);
+				if (GameState().animableState === false)
+					this.stopLoadingSpinner();
+				GameLoop().start();
 			});
 		});
 	}
