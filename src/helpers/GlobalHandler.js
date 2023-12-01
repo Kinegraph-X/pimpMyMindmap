@@ -204,7 +204,6 @@ GlobalHandler.prototype.handleMapChanged = function(e) {
 GlobalHandler.prototype.handleThemeChanged = function(e) {
 	const self = this;
 	GameLoop().stop();
-	this.componentsHelper.resetZoom();
 	self.startLoadingSpinner();
 	// Time to let the browser show the spinner before we hit the DOM hard
 	setTimeout(function() {
@@ -213,6 +212,7 @@ GlobalHandler.prototype.handleThemeChanged = function(e) {
 		// @ts-ignore inherited property (FrameworkEvent is just mocked)
 		GameState().currentTheme = e.data;
 		self.componentsHelper.onResetMapComponent(self.mapData, self.alignment);
+		self.componentsHelper.resetZoom();
 	}, 1024);
 }
 
@@ -225,6 +225,7 @@ GlobalHandler.prototype.handleNewMapData = function(e) {
 	this.mapData = e.data;
 	// onResetMapComponent
 	this.componentsHelper.onResetMapComponent(this.mapData, this.alignment);
+	this.componentsHelper.resetZoom();
 }
 
 /**
