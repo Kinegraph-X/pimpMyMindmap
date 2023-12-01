@@ -17,7 +17,6 @@ const Sprite = require('src/GameTypes/sprites/Sprite');
 
 /**
  * @constructor BgSprite
- * @param {CoreTypes.Point} position
  * @param {PIXI.Texture} texture
  */
 const BgSprite = function(texture) {
@@ -44,9 +43,15 @@ BgSprite.prototype.objectType = 'BgSprite';
 BgSprite.prototype.getSprite = function(texture) {
 	// @ts-ignore
 	const sprite = PIXI.Sprite.from(texture);
+//	sprite.cursor = 'pointer';
+//	sprite.interactive = true;
 	return sprite;
 }
 
+/**
+ * @method centerOnCanvas
+ * @param {CoreTypes.Point} canvasDimensions
+*/
 BgSprite.prototype.centerOnCanvas = function(canvasDimensions) {
 	let zoomFactor = 1, centeringOffsetX = 0, centeringOffsetY = 0;
 		

@@ -86,8 +86,7 @@ var classConstructor = function() {
 			AssetsLoader.then(function() {
 				globalHandler.componentsHelper.handleNewMapData(globalHandler.mapData, globalHandler.alignment);
 				if (GameState().animableState === false)
-					this.stopLoadingSpinner();
-				GameLoop().start();
+					globalHandler.stopLoadingSpinner();
 			});
 		});
 	}

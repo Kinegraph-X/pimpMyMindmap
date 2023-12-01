@@ -85,10 +85,11 @@ LeafSprite.prototype.getSprite = function(texture) {
 /**
  * @method getNextStepForPath
  * @param {Number} duration
+ * @param {Boolean} droppedFrameCatchup
  * @return void
  */
-LeafSprite.prototype.getNextStepForPath = function(duration = 1) {
-	this.movingUpdatePath(duration);
+LeafSprite.prototype.getNextStepForPath = function(duration = 1, droppedFrameCatchup) {
+	this.movingUpdatePath(duration, droppedFrameCatchup);
 	this.currentStep++;
 }
 
@@ -124,16 +125,17 @@ LeafSprite.prototype.getInitialStatePath = function() {
 
 /**
  * @method movingUpdatePath
+ * @param {Boolean} droppedFrameCatchup
  * @param {Number} duration
  */
-LeafSprite.prototype.movingUpdatePath = function(duration) {
+LeafSprite.prototype.movingUpdatePath = function(duration, droppedFrameCatchup) {
 	const maxDurationForBranchlets = Math.max(this.options.maxDurationForBranchlets, duration);
 	let branchletStepIndex = 0;
 	
 	if ((branchletStepIndex = this.options.branchletStepIndicesforLeaves.indexOf(this.currentStep)) !== -1)
 		this.addNewBranchlet(branchletStepIndex, maxDurationForBranchlets);
 	
-	this.updateAtCurrentStep(duration);
+	this.updateAtCurrentStep(duration, droppedFrameCatchup);
 }
 
 

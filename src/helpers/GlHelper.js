@@ -53,6 +53,15 @@ GlHelper.prototype.delayGameLoopStart = function(parentScope) {
 	}, 4096);
 }
 
+/**
+ * @method delayGameLoopStart
+ * @param {GlobalHandler} parentScope
+ */
+GlHelper.prototype.bypassedGameLoopStart = function(parentScope) {
+	parentScope.stopLoadingSpinner();
+	GameState().setRootTimestamp(GameLoop().currentTime);
+}
+
 
 
 

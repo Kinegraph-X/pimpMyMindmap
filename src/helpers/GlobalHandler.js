@@ -35,7 +35,7 @@ const linkedTreeData = require('src/clientRoutes/mapData');	//  _problem  _parti
  */
 const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	GameState().animableState = this.getNoAnimationParam();
-	this.loadingSpinner;
+	this.readyElem;
 	this.getLoadingSpinner();
 	this.startLoadingSpinner();
 	
@@ -85,27 +85,30 @@ GlobalHandler.prototype.appendGameView = function() {
 
 GlobalHandler.prototype.getLoadingSpinner = function() {
 	// @type {HTMLDivElement}
-	const readyElem = document.querySelector('#ready');
+	this.readyElem = document.querySelector('#ready');
+//	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
+//	this.readyElem.style.visibility = 'visible';
+	const loadingSpinner = document.querySelector('#loading_spinner_3');
 	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
-	readyElem.style.visibility = 'visible';
-	this.loadingSpinner = document.querySelector('#loading_spinner_3');
+	loadingSpinner.style.display = 'flex';
+	// @ts-ignore
+	loadingSpinner.style.visibility = 'visible';
 	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
-	this.loadingSpinner.style.display = 'flex';
+	loadingSpinner.style.opacity = 1;
+	
 	const loadingText = document.createElement('span');
 	loadingText.textContent = "Loading Map..."
-	this.loadingSpinner.append(loadingText);
+	loadingSpinner.append(loadingText);
 }
 
 GlobalHandler.prototype.startLoadingSpinner = function() {
 	// @ts-ignore
-	this.loadingSpinner.style.visibility = 'visible';
-	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
-	this.loadingSpinner.style.opacity = 1;
+	this.readyElem.style.display = 'flex';
 }
 
 GlobalHandler.prototype.stopLoadingSpinner = function() {
 	// @ts-ignore
-	this.loadingSpinner.style.visibility = 'hidden';
+	this.readyElem.style.display = 'none';
 }
 
 GlobalHandler.prototype.hookKeyboard = function() {
@@ -130,6 +133,8 @@ GlobalHandler.prototype.hookKeyboard = function() {
 					image.style.marginTop = self.componentsHelper.menuYOffset.toString() + 'px'
 					image.width = 100;
 					image.height = 100 * self.componentsHelper.layoutRes.finalViewportHeight / self.componentsHelper.layoutRes.finalViewportWidth
+					image.style.position = 'relative';
+					image.style.zIndex = '3';
 					// @ts-ignore Component isn't typed
 					self.componentsHelper.rootViewComponent.view.getWrappingNode().prepend(image);
 					self.stopLoadingSpinner();
@@ -199,7 +204,9 @@ GlobalHandler.prototype.handleMapChanged = function(e) {
 GlobalHandler.prototype.handleThemeChanged = function(e) {
 	const self = this;
 	GameLoop().stop();
+	this.componentsHelper.resetZoom();
 	self.startLoadingSpinner();
+	// Time to let the browser show the spinner before we hit the DOM hard
 	setTimeout(function() {
 		self.glHelper.abortAutoLoopEnd();
 		
@@ -214,6 +221,7 @@ GlobalHandler.prototype.handleThemeChanged = function(e) {
  * @param {FrameworkEvent} e
  */
 GlobalHandler.prototype.handleNewMapData = function(e) {
+	this.componentsHelper.resetZoom();
 	this.mapData = e.data;
 	// onResetMapComponent
 	this.componentsHelper.onResetMapComponent(this.mapData, this.alignment);
@@ -225,7 +233,11 @@ GlobalHandler.prototype.handleNewMapData = function(e) {
  */
 GlobalHandler.prototype.handleNewLayout = function(e) {
 	this.glHelper.prepareAutoLoopEnd();
-	this.glHelper.delayGameLoopStart(this);
+	if (GameState().animableState)
+		this.glHelper.delayGameLoopStart(this);
+	else {
+		this.glHelper.bypassedGameLoopStart(this);
+	}
 	GameLoop().start();
 }
 

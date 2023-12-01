@@ -55,6 +55,21 @@ const ComponentsHelper = function() {
 	this.rootBoundingRect = document.body.getBoundingClientRect();
 	this.menuBarReadyPromise;
 	this.menuYOffset = 0;
+	this.zoomState = 0;
+	this.zoomedInFactor = .64;
+	this.dragStartPosition = {
+		marginLeft : 0,
+		marginTop : 0
+	}
+	this.gameCanvasCoord = {
+		position : new CoreTypes.Point(0, 0),
+		zoomFactor : 1
+	};
+	this.boundHandleDragStart = this.handleDragStart.bind(this);
+	this.boundHandleDragMove = this.handleDragMove.bind(this);
+	this.boundHandleDragEnd = this.handleDragEnd.bind(this);
+	
+	this.layoutRes;
 	
 	this.stylesheetsCollector = new StylesheetsCollector();
 	this.mapListSelector;
@@ -64,7 +79,9 @@ const ComponentsHelper = function() {
 	this.pixiRendererComponent;
 	this.linkedTreeInstance;
 	this.gameCanvas = GameLoop().renderer.view;
-	this.layoutRes;
+	this.initialResetHoverEventsOnGameCanvas();
+	this.hookZoomOnCanvas();
+	this.handleAltKey();
 	this.layoutTreeAsBreadthFirst;
 	
 	this.createRootComponent();
@@ -81,6 +98,47 @@ const ComponentsHelper = function() {
 ComponentsHelper.prototype = Object.create(EventEmitter.prototype);
 
 
+/**
+ * @method initialResetHoverEventsOnGameCanvas
+ */
+ComponentsHelper.prototype.initialResetHoverEventsOnGameCanvas = function() {
+	// The app-root component is positionned and has an superior z-index due to the fact it comes after in the DOM tree
+	// => position the canvas at a higher z-index
+	this.gameCanvas.style.position = 'relative';
+	this.gameCanvas.style.zIndex = '2';
+	this.gameCanvas.draggable = true;
+	document.addEventListener("dragover", (event) => {
+	    event.preventDefault();
+	});
+	GameLoop().renderer.plugins.interaction.cursorStyles.default = 'zoom-in';
+}
+
+/**
+ * @method hookZoomOnCanvas
+ */
+ComponentsHelper.prototype.hookZoomOnCanvas = function () {
+	this.gameCanvas.addEventListener('mouseup', this.handleZoomOnCanvas.bind(this));
+}
+
+/**
+ * @method hookLoadThemeEventOnThemeSelector
+ */
+ComponentsHelper.prototype.handleAltKey = function () {
+	const self = this;
+	// @ts-ignore too lazy to type callbacks
+	document.addEventListener('keydown', function(e) {
+		if (self.zoomState !== 0 && e.key === 'Alt') {
+			e.preventDefault();
+			self.gameCanvas.style.cursor = 'zoom-out';
+		}
+	});
+	document.addEventListener('keyup', function(e) {
+		if (self.zoomState !== 0 && e.key === 'Alt') {
+			e.preventDefault();
+			self.gameCanvas.style.cursor = 'grab';
+		}
+	});
+}
 
 /**
  * @method defineRootBoundingRect
@@ -420,23 +478,141 @@ ComponentsHelper.prototype.centerCanvas = function() {
 			y : self.layoutRes.finalViewportHeight
 		};
 		
-//		console.log(canvasDimensions.x, windowSize.x.value, canvasDimensions.y, windowY, canvasDimensions.x - windowSize.x.value, canvasDimensions.y - windowY);
 		if (canvasDimensions.x / canvasDimensions.y > windowSize.x.value / windowY) {
 			zoomFactor = windowSize.x.value / canvasDimensions.x;
 			centeringOffsetY = (windowY - canvasDimensions.y * zoomFactor) / 2 + self.menuYOffset;
+			self.gameCanvasCoord.position.x.value = 0;
+			self.gameCanvasCoord.position.y.value = centeringOffsetY;
+			self.gameCanvasCoord.zoomFactor = zoomFactor;
 		}
 		else {
 			zoomFactor = windowY / canvasDimensions.y;
 			centeringOffsetX = (windowSize.x.value - canvasDimensions.x * zoomFactor) / 2;
 			centeringOffsetY = self.menuYOffset;
+			self.gameCanvasCoord.position.x.value = centeringOffsetX;
+			self.gameCanvasCoord.position.y.value = centeringOffsetY;
+			self.gameCanvasCoord.zoomFactor = zoomFactor;
 		}
 		
-	//	console.log(windowSize.x, canvasDimensions.x, zoomFactor, centeringOffsetX);
 		self.gameCanvas.style.transform = `scale(${zoomFactor}, ${zoomFactor})`; //  translateX(${-canvasDimensions.x * zoomFactor / 2}px)
 		self.gameCanvas.style.marginLeft = (-canvasDimensions.x * (1 - zoomFactor) / 2 + centeringOffsetX).toString() + 'px';
 		self.gameCanvas.style.marginTop = (-canvasDimensions.y * (1 - zoomFactor) / 2 + centeringOffsetY).toString() + 'px';
+		
+		if (self.gameCanvasCoord.zoomFactor >= self.zoomedInFactor) {
+			self.gameCanvas.style.cursor = 'default';
+		}
 	})
 }
+
+/**
+ * @method handleZoomOnCanvas
+ * @param {MouseEvent} e
+ */
+ComponentsHelper.prototype.handleZoomOnCanvas = function(e) {
+	if (this.zoomState !== 0) {
+		if (e.altKey)
+			this.zoomOut();
+	}
+	else {
+		this.zoomIn(e);
+	}
+}
+
+/**
+ * @method zoomIn
+ * @param {MouseEvent} e
+ */
+ComponentsHelper.prototype.zoomIn = function(e) {
+	if (this.gameCanvasCoord.zoomFactor >= this.zoomedInFactor)
+		return;
+	
+	GameLoop().stop();
+	const canvasDimensions = new CoreTypes.Point(
+		this.layoutRes.finalViewportWidth,
+		this.layoutRes.finalViewportHeight
+	);
+	const clickedPoint = new CoreTypes.Point(
+		(e.clientX - this.gameCanvasCoord.position.x.value) / this.gameCanvasCoord.zoomFactor,
+		(e.clientY - this.gameCanvasCoord.position.y.value) / this.gameCanvasCoord.zoomFactor
+	);
+	this.gameCanvas.style.transform = `scale(${this.zoomedInFactor}, ${this.zoomedInFactor})`;
+	this.gameCanvas.style.marginLeft = (-(canvasDimensions.x.value / 2 + (clickedPoint.x.value - canvasDimensions.x.value / 2) * this.zoomedInFactor) + e.clientX).toString() + 'px';
+	this.gameCanvas.style.marginTop = (-(canvasDimensions.y.value / 2 + (clickedPoint.y.value - canvasDimensions.y.value / 2) * this.zoomedInFactor) + e.clientY).toString() + 'px';
+	this.gameCanvas.style.cursor = 'grab';
+	this.zoomState = 1;
+	
+	this.handlePan();
+}
+
+/**
+ * @method zoomOut
+ */
+ComponentsHelper.prototype.zoomOut = function() {
+	this.gameCanvas.removeEventListener('dragstart', this.boundHandleDragStart);
+	this.gameCanvas.removeEventListener('dragend', this.boundHandleDragEnd);
+	document.removeEventListener('dragover', this.boundHandleDragMove);
+	this.centerCanvas();
+	this.zoomState = 0;
+	this.gameCanvas.style.cursor = 'zoom-in';
+}
+
+/**
+ * @method handlePan
+ */
+ComponentsHelper.prototype.handlePan = function() {
+	this.tempCursorPos = new CoreTypes.Point(0, 0);
+	this.gameCanvas.addEventListener('dragstart', this.boundHandleDragStart);
+	this.gameCanvas.addEventListener('dragend', this.boundHandleDragEnd);
+	document.addEventListener('dragover', this.boundHandleDragMove);
+	
+}
+
+/**
+ * @method handleDragStart
+ * @param {DragEvent} dragEvent
+ */
+ComponentsHelper.prototype.handleDragStart = function(dragEvent) {
+	dragEvent.dataTransfer.setDragImage(document.createElement('img'), 0, 0);
+	// Has no visible effect
+	dragEvent.dataTransfer.effectAllowed = "move";
+	// Not working
+//	this.gameCanvas.style.cursor = 'move';
+	this.dragStartPosition.marginLeft = parseInt(this.gameCanvas.style.marginLeft.slice(0, -2));
+	this.dragStartPosition.marginTop = parseInt(this.gameCanvas.style.marginTop.slice(0, -2));
+	this.tempCursorPos.x.value = dragEvent.clientX;
+	this.tempCursorPos.y.value = dragEvent.clientY;
+}
+
+/**
+ * @method handleDragMove
+ * @param {DragEvent} dragEvent
+ */
+ComponentsHelper.prototype.handleDragMove = function(dragEvent) {
+	let distance = new CoreTypes.Point(
+		dragEvent.clientX - this.tempCursorPos.x.value,
+		dragEvent.clientY - this.tempCursorPos.y.value
+	);
+	this.gameCanvas.style.marginLeft = (this.dragStartPosition.marginLeft + distance.x.value).toString() + 'px';
+	this.gameCanvas.style.marginTop = (this.dragStartPosition.marginTop + distance.y.value).toString() + 'px';
+}
+
+/**
+ * @method handleDragEnd
+ * @param {DragEvent} dragEvent
+ */
+ComponentsHelper.prototype.handleDragEnd = function(dragEvent) {
+	this.gameCanvas.style.cursor = 'grab';
+}
+
+/**
+ * @method handleDragEnd
+ * @param {DragEvent} dragEvent
+ */
+ComponentsHelper.prototype.resetZoom = function(dragEvent) {
+	this.zoomOut();
+}
+
+
 
 
 

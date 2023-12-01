@@ -59,9 +59,6 @@ var DevToolsMenu = function(uniqueID, options, model) {
 							selector : ':host',
 							backgroundImage : 'url("plugins/LinkedTree/assets/site_title.png")',
 							backgroundRepeat : 'no-repeat',
-//							color : '#CCCCCC',							// 2da4be
-//							fontSize : '20px',
-//							paddingRight : '34px'
 							width : '250px',
 							height : '40px',
 						},
@@ -80,7 +77,7 @@ var DevToolsMenu = function(uniqueID, options, model) {
 						{
 							selector : ':host',
 							position : 'absolute',
-							marginLeft : '23%'
+							marginLeft : '27%'
 						}
 					],
 					props : [
@@ -96,12 +93,35 @@ var DevToolsMenu = function(uniqueID, options, model) {
 						{
 							selector : ':host',
 							position : 'absolute',
-							marginLeft : '55%'
+							marginLeft : '51%'
 						}
 					],
 					props : [
 						{initialValue : "Change Theme"}
 					]
+				})
+			}),
+			DF.createDef({
+				host : DF.createDef({
+					type : 'SimpleText',
+					nodeName : 'app-title',
+					props : [
+						{text : 'Alt + Click to zoom-out, Ctrl + E gets the map as an image (then right-click)'}
+					],
+					sWrapper : CreateStyle([
+						{
+							selector : ':host',
+							color : '#AAA',
+							fontSize : '14px',
+							position : 'absolute',
+							right : '12px',
+							height : '40px',
+						},
+						{
+							selector : ':host span',
+							display : "inline-block"	
+						}
+					])
 				})
 			})
 		]

@@ -91,10 +91,11 @@ BranchSprite.prototype.getSprite = function(texture) {
 /**
  * @method getNextStepForPath
  * @param {Number} duration
+ * @param {Boolean} droppedFrameCatchup
  * @return void
  */
-BranchSprite.prototype.getNextStepForPath = function(duration = 1) {
-	this.movingUpdatePath(duration);
+BranchSprite.prototype.getNextStepForPath = function(duration = 1, droppedFrameCatchup) {
+	this.movingUpdatePath(duration, droppedFrameCatchup);
 	this.currentStep++;
 //	console.log(this.currentStep);
 }
@@ -174,15 +175,16 @@ BranchSprite.prototype.getInitialStatePath = function() {
 /**
  * @method movingUpdatePath
  * @param {Number} duration
+ * @param {Boolean} droppedFrameCatchup
  * @return void
  */
-BranchSprite.prototype.movingUpdatePath = function(duration) {
+BranchSprite.prototype.movingUpdatePath = function(duration, droppedFrameCatchup) {
 	let branchletStepIndex = 0;
 	const maxDurationForBranchlets = Math.max(this.options.maxDurationForBranchlets, duration);
 	
 	if ((branchletStepIndex = this.options.branchletStepIndicesforBranches.indexOf(this.currentStep)) !== -1)
 		this.addNewBranchlet(branchletStepIndex, maxDurationForBranchlets);
-	this.updateAtCurrentStep(duration);
+	this.updateAtCurrentStep(duration, droppedFrameCatchup);
 }
 
 /**

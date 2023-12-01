@@ -1,3 +1,8 @@
+/*
+ * ES2015 tagged templates always pass their tag an immutable array-like object that has a property called raw (which is also immutable). TypeScript names this object the TemplateStringsArray.
+ * So wtf ? Why does this work, though ?
+ */
+// @ts-ignore
 module.exports = JSON.parse`{
     "id": "e62b2ecf-dfb9-4014-8fac-fa17c0766d72",
     "topic": "Guide de d\\u00e9veloppement d'un serveur de Krokettes avec le protocole WeSkass",
@@ -459,7 +464,7 @@ module.exports = JSON.parse`{
                 },
                 {
                     "id": "d8c1ad44-2e8e-4484-82e2-603291896322",
-                    "topic": "Contraintes d'impl\\u00e9menttion sp\\u00e9cifiques au type de donn\\u00e9e « Krokette » dans le protocole WeSkass",
+                    "topic": "Contraintes d'impl\\u00e9mentation sp\\u00e9cifiques au type de donn\\u00e9e « Krokette » dans le protocole WeSkass",
                     "children": [
                         {
                             "id": "b8bfd47a-726c-464d-bc59-88590f09ed97",
