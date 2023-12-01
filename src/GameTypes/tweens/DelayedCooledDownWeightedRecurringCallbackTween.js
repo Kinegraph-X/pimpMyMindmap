@@ -61,9 +61,6 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.objectType = 'DelayedC
  * @return Void
  */
 DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
-	// WARNING: While intertweening is disabled, we have bypassed the empty weight as first key in the array
-	// as at iteration 1 we want to know the distance between point 1 & 2 (so it must be index 1 in the array)
-	
 	var missedSteps = 0, currentIterationFrameCount = this.interval * this.weights[this.currentIteration], effectiveDuration = 0;
 	this.lastStepTimestamp = timestamp;
 	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
@@ -71,29 +68,14 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
 		return;
 	}
 	
-	if (!this.debugLastTimestamp) {
-		this.debugLastTimestamp = timestamp;
-	}
-	
-	
-//	if (!this.debugStarted) {
-//		this.debugStartTimestamp = (timestamp - GameState().rootTimestamp) / frameDuration;
-////		console.log('started', this.debugStartTime);
-//		this.debugStarted = true;
-//	}
-	
 	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 	stepCount *= frameDuration / this.baseFrameDuration;
 	this.currentPartialStep += stepCount;
 	
-	if (this.currentPartialStep < currentIterationFrameCount) {	//  
+	if (this.currentPartialStep < currentIterationFrameCount) {
 		return;
 	}
 	else {
-//		if (this.target.UID === '121')
-//			console.log(this.currentIteration, (timestamp - this.debugLastTimestamp) / frameDuration, this.weights[this.currentIteration] * this.debugTotalDistance / this.iterationCount);
-//		console.log('currentIteration', this.currentIteration);
-//		this.debugDuration += this.interval * this.weights[this.currentIteration];
 
 		this.currentPartialStep =  Math.round(this.currentPartialStep - currentIterationFrameCount); // Math.floor();	// anticipate accumulating error if we reset the partialStep on a long frame
 
@@ -113,17 +95,12 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
 				break;
 		}
 
-//		console.log(this.currentPartialStep)
 		this.currentIteration++;
 		effectiveDuration = this.interval * this.weights[this.currentIteration]
 		
 		
 		if (this.currentIteration === this.iterationCount) {		// update-steps in sprite are incremented after the update
-//			if (this.target.objectType === 'BranchSprite') {
-//				console.log(this.offsetFromRootTimestamp / this.baseFrameDuration, this.debugDuration + this.currentPartialStep - this.interval * this.weights[this.currentIteration], (timestamp - GameState().rootTimestamp) / this.baseFrameDuration - this.debugStartTime);
-//			}
 			this.ended = true;
-//			return;
 		}
 	}
 	
@@ -137,9 +114,6 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
 		}
 	}
 
-	// DEBUG
-//	this.debugLastTimestamp = timestamp;
-	
 	// @ts-ignore : TS doesn't understand anything to prototypal inheritance
 	return this.target[this.cbName].call(this.target, Math.max(2, effectiveDuration));	//  
 }

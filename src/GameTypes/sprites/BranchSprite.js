@@ -97,7 +97,6 @@ BranchSprite.prototype.getSprite = function(texture) {
 BranchSprite.prototype.getNextStepForPath = function(duration = 1, droppedFrameCatchup) {
 	this.movingUpdatePath(duration, droppedFrameCatchup);
 	this.currentStep++;
-//	console.log(this.currentStep);
 }
 
 /**
@@ -194,20 +193,7 @@ BranchSprite.prototype.movingUpdatePath = function(duration, droppedFrameCatchup
  * @return void
  */
 BranchSprite.prototype.updateAtCurrentStep = function(duration, droppedFrameCatchup) {
-//	if (this.currentStep === 0)
-//		return;
-//	console.log(this.distances[this.currentStep])
 	if (!droppedFrameCatchup && this.currentStep < this.effectiveStepCount - 1 && this.distances[this.currentStep] > this.minDistanceForAnimation) {
-//		if (this.currentStep > 0)
-//			for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
-//				this.path[i].x = this.positions[this.currentStep].x.value;
-//				this.path[i].y = this.positions[this.currentStep].y.value;
-//			}
-		
-//		if (this.UID === '121') {
-//			console.log(duration);
-//		}
-//		console.log(this.currentStep)//, this.positions[this.currentStep]);
 		for (let i = this.currentStep + 1, l = this.effectiveStepCount; i < l; i++) {
 			GameLoop().pushTween(
 				new TargetPositionTween(
@@ -222,9 +208,6 @@ BranchSprite.prototype.updateAtCurrentStep = function(duration, droppedFrameCatc
 		}
 	}
 	else if (this.currentStep > 0 && this.distances[this.currentStep - 1] <= this.minDistanceForAnimation) {
-//		if (this.UID === '121')
-//			console.log('currentStep', this.currentStep);
-		// seems path[end] is not the last point displayed
 		for (let i = this.currentStep, l = this.effectiveStepCount; i < l; i++) {
 			this.path[i].x = this.positions[this.currentStep].x.value;
 			this.path[i].y = this.positions[this.currentStep].y.value;
@@ -392,9 +375,6 @@ BranchSprite.prototype.getRandomBranchlet = function(count) {
  * LATE-INITIALISATION of BranchSprite.prototype.averageWeights
  */
 BranchSprite.prototype.measureDistances = function() {
-	// WARNING: While intertweening is disabled, we have bypassed the empty weight as first key in the array
-	// as at iteration 1 we want to know the distance between point 1 & 2 (so it must be index 1 in the array)
-	
 	let lastPosition = new CoreTypes.Point(0, 0),
 		distance = 0;
 	
@@ -409,14 +389,10 @@ BranchSprite.prototype.measureDistances = function() {
 		lastPosition = position;
 	}, this);
 	
-//	if (this.UID === '121') {
-//		console.log(this.distances, this.averageWeights);
-//	}
 	this.averageWeights.push(0);
 	this.distances.forEach(function(distance) {
 		this.averageWeights.push((distance / this.totalDistance) * this.effectiveStepCount);
 	}, this);
-//	console.log(this.averageWeights);
 }
 
 /**

@@ -605,10 +605,9 @@ ComponentsHelper.prototype.handleDragEnd = function(dragEvent) {
 }
 
 /**
- * @method handleDragEnd
- * @param {DragEvent} dragEvent
+ * @method resetZoom
  */
-ComponentsHelper.prototype.resetZoom = function(dragEvent) {
+ComponentsHelper.prototype.resetZoom = function() {
 	this.zoomOut();
 }
 
