@@ -77,8 +77,22 @@ const ThemeDescriptorsFactory = function(
  * @type {{[key:String] : ThemeDescriptorsFactory}}
  */
 const themeDescriptors = {
-	'Midi' : new ThemeDescriptorsFactory(
+	'DeepMind' : new ThemeDescriptorsFactory(
 		0,
+		null,
+		true,
+		true,
+		true,
+		null,
+		false,
+		true,
+		null,	// []
+		null,
+		null,
+		null
+	),
+	'Midi' : new ThemeDescriptorsFactory(
+		1,
 		true,
 		true,
 		true,
@@ -92,7 +106,7 @@ const themeDescriptors = {
 		null
 	),
 	'80s' : new ThemeDescriptorsFactory(
-		1,
+		2,
 		null,
 		true,
 		true,
@@ -106,7 +120,7 @@ const themeDescriptors = {
 		'doubleQuad'
 	),
 	'Whitehouse' : new ThemeDescriptorsFactory(
-		2,
+		3,
 		null,
 		true,
 		null,
@@ -120,7 +134,7 @@ const themeDescriptors = {
 		'singleQuad'
 	),
 	'SteamSoul' : new ThemeDescriptorsFactory(
-		3,
+		4,
 		null,
 		true,
 		true,
@@ -134,7 +148,7 @@ const themeDescriptors = {
 		'doubleQuad'
 	),
 	'MindTrip' : new ThemeDescriptorsFactory(
-		4,
+		5,
 		null,
 		null,
 		true,
@@ -148,7 +162,7 @@ const themeDescriptors = {
 		'singleQuad'
 	),
 	'24H du Mind' : new ThemeDescriptorsFactory(
-		5,
+		6,
 		null,
 		true,
 		true,

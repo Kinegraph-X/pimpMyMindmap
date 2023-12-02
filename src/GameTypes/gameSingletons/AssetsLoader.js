@@ -5,6 +5,35 @@
 const manifest = {
 	bundles : [
 		{
+			name : 'DeepMind',
+			assets : [
+				{name : 'DeepMindroot', srcs : 'plugins/LinkedTree/assets/root_theme_deepmind.png'},
+				{name : 'DeepMindbranch01', srcs : 'plugins/LinkedTree/assets/branches/branch_01_theme_deepmind.png'},
+				{name : 'DeepMindbranchRoot', srcs : 'plugins/LinkedTree/assets/branches/branch_root_theme_deepmind.png'},
+				{name : 'DeepMindbranch01Reverse', srcs : 'plugins/LinkedTree/assets/branches/branch_01_theme_deepmind.png'},
+				{name : 'DeepMindbranchRootReverse', srcs : 'plugins/LinkedTree/assets/branches/branch_root_theme_deepmind.png'},
+				{name : 'DeepMindleaf00', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_01.png'},
+				{name : 'DeepMindleaf01', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_02.png'},
+				{name : 'DeepMindleaf02', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_03.png'},
+				{name : 'DeepMindleaf02Long', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_01.png'},
+				{name : 'DeepMindleaf00Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_01.png'},
+				{name : 'DeepMindleaf01Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_02.png'},
+				{name : 'DeepMindleaf02Reverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_03.png'},
+				{name : 'DeepMindleaf02LongReverse', srcs : 'plugins/LinkedTree/assets/leaves/leaf_theme_deepmind_01.png'},
+				
+				{name : 'DeepMindbranchlet00', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_deepmind.png'},
+				{name : 'DeepMindbranchlet01', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_deepmind.png'},
+				{name : 'DeepMindbranchlet02', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_deepmind.png'},
+				
+				{name : 'DeepMindfruit01', srcs : 'plugins/LinkedTree/assets/fruits/fruit_theme_deepmind_01.png'},
+				{name : 'DeepMindfruit02', srcs : 'plugins/LinkedTree/assets/fruits/fruit_theme_deepmind_02.png'},
+
+				{name : 'DeepMindthemeBg', srcs : 'plugins/LinkedTree/assets/backgrounds/deepmind_theme.png'},
+				
+				{name : 'DeepMindlogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
+			]
+		},
+		{
 			name : 'Midi',
 			assets : [
 				{name : 'Midiroot', srcs : 'plugins/LinkedTree/assets/root.png'},
@@ -188,6 +217,8 @@ module.exports = new Promise(function(resolve, reject) {
 		// @ts-ignore
 		PIXI.Assets.init({manifest}).then(function() {
 			Promise.all([
+				// @ts-ignore
+				PIXI.Assets.loadBundle('DeepMind'),
 				// @ts-ignore
 				PIXI.Assets.loadBundle('Midi'),
 				// @ts-ignore

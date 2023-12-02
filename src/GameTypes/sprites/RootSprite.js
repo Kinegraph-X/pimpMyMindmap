@@ -12,8 +12,7 @@ const Sprite = require('src/GameTypes/sprites/Sprite');
 
 /**
  * @constructor RootSprite
- * @param {CoreTypes.Point} positionStart
- * @param {CoreTypes.Point} positionEnd
+ * @param {CoreTypes.Point} position
  * @param {PIXI.Texture} texture
  */
 const RootSprite = function(position, texture) {
