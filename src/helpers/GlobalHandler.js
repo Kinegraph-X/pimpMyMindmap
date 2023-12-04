@@ -245,7 +245,7 @@ GlobalHandler.prototype.handleNewLayout = function(e) {
 /**
  * @property @static {String} defaultTheme
  */
-GlobalHandler.prototype.defaultTheme = '24H du Mind'; 	// midi 
+GlobalHandler.prototype.defaultTheme = '24H du Mind'; //''; 	// midi 
 
 
 

@@ -15,8 +15,9 @@ const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
  * @param {Number} interval
  * @param {Number} iterationCount
  * @param {Number} offsetFromRootTimestamp
+ * @param {Number} debugTotalDistance
  */
-const DelayedCooledDownWeightedRecurringCallbackTween = function(target, cbName, interval, iterationCount, offsetFromRootTimestamp, debugTotalDistance) {
+const DelayedCooledDownWeightedRecurringCallbackTween = function(target, cbName, interval, iterationCount, offsetFromRootTimestamp, debugTotalDistance = 0) {
 	DelayedTween.call(this, target, undefined, undefined, undefined, offsetFromRootTimestamp);
 	this.cbName = cbName;
 	this.interval = interval;

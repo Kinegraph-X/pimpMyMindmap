@@ -348,6 +348,18 @@ GameLoop.prototype.removeTween = function(tween) {
  * @method removeTween
  * 
  * Self-explanatory
+ * 
+ * @param {Number} pos
+ * 
+ */
+GameLoop.prototype.removeTweenAt = function(pos) {
+	this.tweens.splice(pos, 1);
+}
+
+/**
+ * @method clearTweens
+ * 
+ * Self-explanatory
  */
 GameLoop.prototype.clearTweens = function() {
 	this.tweens.length = 0;

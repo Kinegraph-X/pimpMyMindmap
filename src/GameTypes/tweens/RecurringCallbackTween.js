@@ -9,8 +9,9 @@
  * @param {Array<Object>} argsAsArray
  * @param {Object} scope
  * @param {String} propName
+ * @param {Number} iterationCount
  */
-const RecurringCallbackTween = function(cb, interval, argsAsArray = [], scope = {}, propName = '') {
+const RecurringCallbackTween = function(cb, interval, argsAsArray = [], scope = {}, propName = '', iterationCount = +Infinity) {
 	this.cb = cb;
 	this.interval = interval;
 	this.argsAsArray = argsAsArray || new Array();
@@ -21,6 +22,8 @@ const RecurringCallbackTween = function(cb, interval, argsAsArray = [], scope = 
 	this.lastStepTimestamp = 0;
 	this.baseFrameDuration = 1000 / 60;
 	this.currentPartialStep = 0;
+	this.iterationCount = iterationCount;
+	this.currentIteration = 0;
 }
 RecurringCallbackTween.prototype.objectType = 'RecurringCallbackTween';
 
@@ -37,13 +40,17 @@ RecurringCallbackTween.prototype.nextStep = function(stepCount, frameDuration, t
 	this.lastStepTimestamp = timestamp;
 	
 	if (this.currentPartialStep >= this.interval) {
+		this.currentIteration++;
+		if (this.currentIteration > this.iterationCount)
+			this.ended = true;
+		
 		this.currentPartialStep = 0;
-//		if (this.scope)
-//			// @ts-ignore cause we can't explicitly declare the type of "scope"
-//			return this.cb(this.scope[this.propName]);
-//		else if (this.argsAsArray)
-//			return this.cb.apply(null, this.argsAsArray);
-//		else
+		if (this.scope)
+			// @ts-ignore cause we can't explicitly declare the type of "scope"
+			return this.cb(this.scope[this.propName]);
+		else if (this.argsAsArray)
+			return this.cb.apply(null, this.argsAsArray);
+		else
 			return this.cb();
 	}
 }

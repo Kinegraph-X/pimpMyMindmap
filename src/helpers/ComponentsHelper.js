@@ -526,7 +526,7 @@ ComponentsHelper.prototype.zoomIn = function(e) {
 	if (this.gameCanvasCoord.zoomFactor >= this.zoomedInFactor)
 		return;
 	
-	GameLoop().stop();
+//	GameLoop().stop();
 	const canvasDimensions = new CoreTypes.Point(
 		this.layoutRes.finalViewportWidth,
 		this.layoutRes.finalViewportHeight

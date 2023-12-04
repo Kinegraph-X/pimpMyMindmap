@@ -301,6 +301,32 @@ LeafSprite.prototype.getRandomBranchlet = function(count) {
 }
 
 /**
+ * @method updateGrownBranchCoordinates
+ * @param {CoreTypes.Point} positionStart
+ * @param {CoreTypes.Point} positionEnd
+ */
+LeafSprite.prototype.updateGrownBranchCoordinates = function(positionStart, positionEnd) {
+	this.positionStart = positionStart;
+	this.positionEnd = positionEnd;
+	this.refPositions = this.getRefPositions();
+	this.updatePath();
+}
+
+/**
+ * @method updatePath
+ * @return void
+ */
+LeafSprite.prototype.updatePath = function() {
+	const spline = new Bezier(this.refPositions);
+	const lut = spline.getLUT(this.stepCount);
+	
+	for (let i = 0, l = this.stepCount; i <= l; i++) {
+		this.path[i].x = lut[i].x
+		this.path[i].y = lut[i].y
+	}
+}
+
+/**
  * @static {CoreTypes.Dimension} defaultSpaceShipDimensions
  */
 LeafSprite.prototype.defaultDimensions = new CoreTypes.Dimension(

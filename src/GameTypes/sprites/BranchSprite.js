@@ -60,6 +60,7 @@ const BranchSprite = function(positionStart, positionEnd, texture, options) {
 	}
 
 	this.getPath();
+	
 	this.branchletSpawnPoints = this.getBranchletSpawnPoints();
 	
 	this.distances = Array();
@@ -280,7 +281,7 @@ BranchSprite.prototype.getRefPositions = function() {
 				this.positionEnd.y.value
 			),
 			new CoreTypes.Simple3DPoint(
-				this.positionEnd.x.value - horizontalOffset + quarterOfMidHorizontalOffset,
+				this.positionEnd.x.value - horizontalOffset - quarterOfMidHorizontalOffset,
 				this.positionEnd.y.value
 			),
 			new CoreTypes.Simple3DPoint(
@@ -396,6 +397,53 @@ BranchSprite.prototype.measureDistances = function() {
 }
 
 /**
+ * @method updateGrownBranchCoordinates
+ * @param {CoreTypes.Point} positionStart
+ * @param {CoreTypes.Point} positionEnd
+ */
+BranchSprite.prototype.updateGrownBranchCoordinates = function(positionStart, positionEnd) {
+	this.positionStart = positionStart;
+	this.positionEnd = positionEnd;
+	this.refPositions = this.getRefPositions();
+	this.updatePath();
+}
+
+/**
+ * @method updatePath
+ * @return void
+ */
+BranchSprite.prototype.updatePath = function() {
+	if (this.options.curveType === curveTypes.singleQuad) {
+		const spline = new Bezier(this.refPositions);
+		const lut = spline.getLUT(this.stepCount);
+		
+		for (let i = 0, l = this.stepCount; i <= l; i++) {
+			this.path[i].x = lut[i].x
+			this.path[i].y = lut[i].y
+		}
+	}
+	else if (this.options.curveType === curveTypes.doubleQuad) {
+		const stepCount = this.stepCount;
+		const spline1 = new Bezier(this.refPositions.slice(0, 4));
+		const lut1 = spline1.getLUT(stepCount);
+		for (let i = 0, l = stepCount; i <= l; i++) {
+			this.path[i].x = lut1[i].x
+			this.path[i].y = lut1[i].y
+		}
+		
+		const spline2 = new Bezier(this.refPositions.slice(3));
+		const lut2 = spline2.getLUT(stepCount);
+		let cursor = stepCount;
+		for (let i = 1, l = stepCount; i <= l; i++) {
+			cursor++;
+			this.path[cursor].x = lut2[i].x
+			this.path[cursor].y = lut2[i].y;
+		}
+		
+	}
+}
+
+/**
  * @static @method updateAverageWeights
  */
 BranchSprite.prototype.updateAverageWeights = function() {
@@ -409,6 +457,18 @@ BranchSprite.prototype.updateAverageWeights = function() {
 BranchSprite.prototype.isBigBranch = function() {
 	this.minDistanceForAnimation = this.defaultMinDistanceForBigAnimation;
 }
+
+BranchSprite.prototype.plotPath = function() {
+	let id;
+	this.path.forEach(function(point, key) {
+		id = new PIXI.Text(key, {fontSize : 8});
+		id.x = point.x;
+		id.y = point.y;
+		GameLoop().stage.addChild(id);
+	}, this);
+}
+
+
 
 
 

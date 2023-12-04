@@ -12,7 +12,7 @@ const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
 
 
 /**
- * @constructor DelayedPropFadeOneShotCallbackTween
+ * @constructor DelayedWeightedPropFadeOneShotCallbackTween
  * @param {BranchSprite|LeafSprite|BranchletSprite} target
  * @param {String} cbName
  * @param {Number} delay
@@ -24,7 +24,7 @@ const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
  * @param {Number} offset
  * @param {Number} transformDuration
  */
-const DelayedPropFadeOneShotCallbackTween = function(target, cbName, delay, argsAsArray = [], scope = null, scopedPropName = '', fadedTarget, affectedProp, offset, transformDuration) {
+const DelayedWeightedPropFadeOneShotCallbackTween = function(target, cbName, delay, argsAsArray = [], scope = null, scopedPropName = '', fadedTarget, affectedProp, offset, transformDuration) {
 	DelayedTween.call(this, target, undefined, undefined, undefined, delay);
 	this.cbName = cbName;
 	this.argsAsArray = argsAsArray || new Array();
@@ -36,9 +36,10 @@ const DelayedPropFadeOneShotCallbackTween = function(target, cbName, delay, args
 	this.transformDuration = transformDuration;
 	this.callbackCalled = false;
 	this.currentFrame = 0;
+	this.weights = Array();
 }
-DelayedPropFadeOneShotCallbackTween.prototype = Object.create(DelayedTween);
-DelayedPropFadeOneShotCallbackTween.prototype.objectType = 'DelayedPropFadeOneShotCallbackTween';
+DelayedWeightedPropFadeOneShotCallbackTween.prototype = Object.create(DelayedTween);
+DelayedWeightedPropFadeOneShotCallbackTween.prototype.objectType = 'DelayedWeightedPropFadeOneShotCallbackTween';
 
 /**
  * @method nextStep
@@ -47,7 +48,7 @@ DelayedPropFadeOneShotCallbackTween.prototype.objectType = 'DelayedPropFadeOneSh
  * @param {Number} timestamp
  * @return Void
  */
-DelayedPropFadeOneShotCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
+DelayedWeightedPropFadeOneShotCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
 	let offset = 0;
 	this.lastStepTimestamp = timestamp;
 	// @ts-ignore inherited property
@@ -96,7 +97,7 @@ DelayedPropFadeOneShotCallbackTween.prototype.nextStep = function(stepCount, fra
 /**
  * @method testOutOfScreen
  */
-DelayedPropFadeOneShotCallbackTween.prototype.testOutOfScreen = function() {
+DelayedWeightedPropFadeOneShotCallbackTween.prototype.testOutOfScreen = function() {
 	return false;
 }
 
@@ -104,4 +105,4 @@ DelayedPropFadeOneShotCallbackTween.prototype.testOutOfScreen = function() {
 
 
 
-module.exports = DelayedPropFadeOneShotCallbackTween;
+module.exports = DelayedWeightedPropFadeOneShotCallbackTween;
