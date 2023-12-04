@@ -35,6 +35,7 @@ const DelayedCooledDownWeightedRecurringCallbackTween = require('src/GameTypes/t
 const DelayedOneShotCallbackTween = require('src/GameTypes/tweens/DelayedOneShotCallbackTween');
 const DelayedPropFadeOneShotCallbackTween = require('src/GameTypes/tweens/DelayedPropFadeOneShotCallbackTween');
 const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = require('src/GameTypes/tweens/DelayedWeightedMultiPropFadeOneShotCallbackLastTween');
+const InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween = require('src/GameTypes/tweens/InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween');
 
 /*
  * TODOS:
@@ -44,6 +45,18 @@ const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = require('src/GameTy
  * - Benchmark on another machine
  */
 
+
+/**
+ * @constructor RolloverRef
+ * @param {Point} vector
+ */
+const MouseVector = function(vector) {
+	this.vector = vector;
+	this.speed = this.getSpeed();
+}
+MouseVector.prototype.getSpeed = function() {
+	return Math.hypot(this.vector.x.value, this.vector.y.value);
+}
 
 /**
  * @constructor RolloverRef
@@ -73,7 +86,12 @@ const RolloverRef = function(node, currentOrigin  = null) {
 	this.textTweens = [];
 	/** @type {DelayedWeightedMultiPropFadeOneShotCallbackLastTween[]} */
 	this.leafTweens = [];
+	
+	/** @type {RolloverRef[]} */
+	this.children = Array();
 }
+
+
 
 
 
@@ -85,6 +103,7 @@ const RolloverRef = function(node, currentOrigin  = null) {
 const PlantCreator = function(layoutTree) {
 	// @ts-ignore PIXI
 	PIXI.settings.FILTER_RESOLUTION = .5;
+	
 	this.layoutTree = layoutTree;
 	this.themeOptions = themeDescriptors[GameState().currentTheme];
 	 
@@ -238,9 +257,12 @@ PlantCreator.prototype.getBranches = function() {
 					branchSprite = new BranchSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][branchTextureName], branchOptions);
 				}
 				
+				// ROLLOVER REF TREE
 				// @ts-ignore
 				this.rolloverRefs[node._UID].previousBranch = branchSprite;
 				if (currentOrigin !== this.rootNode) {
+					// @ts-ignore
+					this.rolloverRefs[currentOrigin._UID].children.push(this.rolloverRefs[node._UID]);
 					// @ts-ignore
 					this.rolloverRefs[currentOrigin._UID].nextBranch.push(branchSprite);
 					// @ts-ignore
@@ -367,9 +389,7 @@ PlantCreator.prototype.getBranches = function() {
 						GameLoop().stage.addChild(node.canvasShape.shape);
 					
 					// @ts-ignore : LayoutNode type isn't completely mocked
-					node.canvasShape.shape.on('mouseenter', this.handleHoverEffect.bind(this, node._UID));
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					node.canvasShape.shape.on('mouseout', this.handleHoverEndedEffect.bind(this, node._UID));
+					node.canvasShape.shape.on('mouseenter', this.handleRecursiveHoverEffect.bind(this, node._UID));
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					node.canvasShape.shape.interactive = true;
 				}
@@ -414,9 +434,12 @@ PlantCreator.prototype.getBranches = function() {
 				
 				leafSprite = new LeafSprite(positionStart, positionEnd, loadedAssets[themeDescriptors[GameState().currentTheme].id][GameState().currentTheme + leafTextureName], branchOptions);
 				
+				// ROLLOVER REF TREE
 				// @ts-ignore
 				this.rolloverRefs[node._UID].previousBranch = leafSprite;
 				if (currentOrigin !== this.rootNode) {
+					// @ts-ignore
+					this.rolloverRefs[currentOrigin._UID].children.push(this.rolloverRefs[node._UID]);
 					// @ts-ignore
 					this.rolloverRefs[currentOrigin._UID].nextBranch.push(leafSprite);
 					// @ts-ignore
@@ -504,9 +527,7 @@ PlantCreator.prototype.getBranches = function() {
 				}
 				
 				// @ts-ignore : LayoutNode type isn't completely mocked
-				node.canvasShape.shape.on('mouseenter', this.handleHoverEffect.bind(this, node._UID));
-				// @ts-ignore : LayoutNode type isn't completely mocked
-				node.canvasShape.shape.on('mouseout', this.handleHoverEndedEffect.bind(this, node._UID));
+				node.canvasShape.shape.on('mouseenter', this.handleRecursiveHoverEffect.bind(this, node._UID));
 				// @ts-ignore : LayoutNode type isn't completely mocked
 				node.canvasShape.shape.interactive = true;
 			}
@@ -690,11 +711,55 @@ PlantCreator.prototype.getRandomFruitAsBool = function() {
 	return Math.random() > .4;
 }
 
+
+
 /**
- * @method handleHoverEffect
+ * @method getMouseVector
+ * @return {MouseVector}
+ */
+PlantCreator.prototype.getMouseVector = function() {
+	return new MouseVector(
+			new Point(
+			GameState().mousePosition.x.value - GameState().lastMousePosition.x.value,
+			GameState().mousePosition.y.value - GameState().lastMousePosition.y.value
+		)
+	);
+}
+
+
+
+/**
+ * @method handleRecursiveHoverEffect
  * @param {String} UID
  */
-PlantCreator.prototype.handleHoverEffect = function(UID) {
+PlantCreator.prototype.handleRecursiveHoverEffect = function(UID) {
+	const mouseVector = this.getMouseVector();
+	this.effectiveRecursiveHoverEffect(UID, mouseVector, 0);
+}
+
+/**
+ * @method effectiveRecursiveHoverEffect
+ * @param {String} UID
+ * @param {MouseVector} mouseVector
+ * @param {Number} depth
+ */
+PlantCreator.prototype.effectiveRecursiveHoverEffect = function(UID, mouseVector, depth) {
+	depth++;
+	this.ActivateNodeHoverEffect(UID, mouseVector, depth);
+	this.rolloverRefs[UID].children.forEach(function(rolloverRef) {
+		this.effectiveRecursiveHoverEffect(rolloverRef.node._UID, mouseVector, depth);
+	}, this);
+	
+}
+
+
+/**
+ * @method ActivateNodeHoverEffect
+ * @param {String} UID
+ * @param {MouseVector} mouseVector
+ * @param {Number} depth
+ */
+PlantCreator.prototype.ActivateNodeHoverEffect = function(UID, mouseVector, depth) {
 	const node = this.rolloverRefs[UID].node;
 	if (node.blockingTween)
 		return;
@@ -710,10 +775,10 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 		null,
 		// @ts-ignore
 		node.canvasShape.shape,
-		['x'],
-		[-25],
-		60,
-		'easeOutElastic'
+		['x', 'y'],
+		[mouseVector.vector.x.value * mouseVector.speed, mouseVector.vector.y.value * mouseVector.speed],
+		this.baseHoverEffectDuration * (depth + 1) / 2,
+		'easeOutStaticElastic'
 	);
 	GameLoop().unshiftTween(
 		node.blockingTween
@@ -731,11 +796,11 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 				null,
 				// @ts-ignore
 				textNode.canvasShape.shape,
-				['x'],
+				['x', 'y'],
 				// @ts-ignore
-				[-25],
-				60,
-				'easeOutElastic'
+				[mouseVector.vector.x.value * mouseVector.speed, mouseVector.vector.y.value * mouseVector.speed],
+				this.baseHoverEffectDuration * (depth + 1) / 2,
+				'easeOutStaticElastic'
 			)
 		);
 		GameLoop().unshiftTween(
@@ -745,42 +810,23 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 	
 	let positionTween = new RecurringCallbackTween(
 		this.refreshPositionsForNodeElasticity.bind(this, this.rolloverRefs[UID].node, this.rolloverRefs[UID].currentOrigin),
-		5,
+		this.baseHoverEffectDuration * ((depth + 1) / 2) / 12, // stepCount is 1/12 of the total duration
 		[
 			this.rolloverRefs[UID].previousBranch.options.isReversed,
 			this.rolloverRefs[UID].previousBranch
 		],
 		null,
 		null,
-		12
+		this.baseHoverEffectDuration * ((depth + 1) / 2) / 5  // stepDuration is 1/5 of the total duration
 	);
 	GameLoop().unshiftTween(
 		positionTween
 	);
 	
-	if (this.rolloverRefs[UID].nextBranch.length) {
-		this.rolloverRefs[UID].nextBranch.forEach(function(nextBranch, key) {
-			positionTween = new RecurringCallbackTween(
-				this.refreshPositionsForNodeElasticity.bind(this, this.rolloverRefs[UID].nextNode[key], this.rolloverRefs[UID].node),
-				5,
-				[
-					nextBranch.options.isReversed,
-					nextBranch
-				],
-				null,
-				null,
-				12
-			);
-			GameLoop().unshiftTween(
-				positionTween
-			);
-		}, this);
-	}
-	
 	if (this.rolloverRefs[UID].underlyingBranch) {
 		positionTween = new RecurringCallbackTween(
 			this.refreshPositionsForNodeElasticity.bind(this, this.rolloverRefs[UID].node, this.rolloverRefs[UID].currentOrigin),
-			5,
+			this.baseHoverEffectDuration * ((depth + 1) / 2) / 12, // stepCount is 1/12 of the total duration
 			[
 				this.rolloverRefs[UID].underlyingBranch.options.isReversed,
 				this.rolloverRefs[UID].underlyingBranch,
@@ -788,7 +834,7 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 			],
 			null,
 			null,
-			12
+			this.baseHoverEffectDuration * ((depth + 1) / 2) / 5 // stepDuration is 1/5 of the total duration
 		);
 		GameLoop().unshiftTween(
 			positionTween
@@ -805,10 +851,10 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 			null,
 			null,
 			this.rolloverRefs[UID].fruit,
-			['x'],
-			[-25],
-			60,
-			'easeOutElastic'
+			['x', 'y'],
+			[mouseVector.vector.x.value * mouseVector.speed, mouseVector.vector.y.value * mouseVector.speed],
+			this.baseHoverEffectDuration * (depth + 1) / 2,
+			'easeOutStaticElastic'
 		);
 		GameLoop().unshiftTween(
 			this.rolloverRefs[UID].fruitTween
@@ -829,10 +875,10 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 					null,
 					// @ts-ignore
 					nextNode.canvasShape.shape,
-					['x'],
-					[-5],
-					90,
-					'easeOutElastic'
+					['x', 'y'],
+					[mouseVector.vector.x.value * mouseVector.speed / 5, mouseVector.vector.y.value * mouseVector.speed / 5],
+					this.baseHoverEffectDuration * (depth + 1) * .75,
+					'easeOutStaticElastic'
 				)
 			);
 			GameLoop().unshiftTween(
@@ -842,169 +888,7 @@ PlantCreator.prototype.handleHoverEffect = function(UID) {
 	}
 }
 
-/**
- * @method handleHoverEndedEffect
- * @param {String} UID
- */
-PlantCreator.prototype.handleHoverEndedEffect = function(UID) {
-	const node = this.rolloverRefs[UID].node;
-	if (node.blockingTween) {
-		// @ts-ignore too lazy to mock a tween-typed prop on LayoutNode (by all means it's a hack for now)
-		node.blockingTween.ended = true;
-	}
-	if (this.rolloverRefs[UID].fruitTween)
-		this.rolloverRefs[UID].fruitTween.ended = true;
-		
-	if (this.rolloverRefs[UID].leafTweens.length) {
-		this.rolloverRefs[UID].leafTweens.forEach(function(tween) {
-			tween.ended = true;
-		});
-	}
-	this.rolloverRefs[UID].textTweens.forEach(function(tween) {
-		tween.ended = true;
-	});
-	
-	
-	const tween = new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
-		// @ts-ignore
-		node,
-		'resetBlockingTween',
-		0,
-		null,
-		null,
-		null,
-		// @ts-ignore
-		node.canvasShape.shape,
-		['x'],
-		// @ts-ignore
-		[-node.canvasShape.shape.x],
-		7,
-		'linear'
-	);
-	GameLoop().unshiftTween(
-		tween
-	);
-	
-	this.rolloverRefs[UID].textNodes.forEach(function(textNode) {
-		GameLoop().unshiftTween(
-			new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
-				// @ts-ignore
-				textNode,
-				'resetBlockingTween',
-				0,
-				null,
-				null,
-				null,
-				// @ts-ignore
-				textNode.canvasShape.shape,
-				['x'],
-				// @ts-ignore
-				[-(textNode.canvasShape.shape.x - textNode.layoutAlgo.offsets.getMarginInline())],
-				7,
-				'linear'
-			)
-		);
-	}, this);
-	this.rolloverRefs[UID].textTweens.length = 0;
-	
-	let positionTween = new RecurringCallbackTween(
-		this.refreshPositionsForNodeElasticity.bind(this, this.rolloverRefs[UID].node, this.rolloverRefs[UID].currentOrigin),
-		3,
-		[
-			this.rolloverRefs[UID].previousBranch.options.isReversed,
-			this.rolloverRefs[UID].previousBranch
-		],
-		null,
-		null,
-		2
-	);
-	GameLoop().unshiftTween(
-		positionTween
-	);
-	
-	if (this.rolloverRefs[UID].nextBranch.length) {
-		this.rolloverRefs[UID].nextBranch.forEach(function(nextBranch, key) {
-			positionTween = new RecurringCallbackTween(
-				this.refreshPositionsForNodeElasticity.bind(this, this.rolloverRefs[UID].nextNode[key], this.rolloverRefs[UID].node),
-				3,
-				[
-					nextBranch.options.isReversed,
-					nextBranch
-				],
-				null,
-				null,
-				3
-			);
-			GameLoop().unshiftTween(
-				positionTween
-			);
-		}, this);
-	}
-	
-	if (this.rolloverRefs[UID].underlyingBranch) {
-		positionTween = new RecurringCallbackTween(
-			this.refreshPositionsForNodeElasticity.bind(this, this.rolloverRefs[UID].node, this.rolloverRefs[UID].currentOrigin),
-			3,
-			[
-				this.rolloverRefs[UID].underlyingBranch.options.isReversed,
-				this.rolloverRefs[UID].underlyingBranch,
-				true
-			],
-			null,
-			null,
-			3
-		);
-		GameLoop().unshiftTween(
-			positionTween
-		);
-	}
-	
-	if (this.rolloverRefs[UID].fruit) {
-		this.rolloverRefs[UID].fruitTween.ended = true;
-		GameLoop().unshiftTween(
-			new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
-				// @ts-ignore
-				node,
-				'resetBlockingTween',
-				0,
-				null,
-				null,
-				null,
-				this.rolloverRefs[UID].fruit,
-				['x'],
-				// @ts-ignore
-				[-(this.rolloverRefs[UID].fruit.x - node.layoutAlgo.offsets.getMarginInline())],
-				7,
-				'linear'
-			)
-		);
-	}
-	
-	// @ts-ignore
-	if (this.rolloverRefs[UID].nextBranch.length && this.rolloverRefs[UID].nextBranch[0].objectType === 'LeafSprite') {
-		this.rolloverRefs[UID].nextNode.forEach(function(nextNode) {
-			GameLoop().unshiftTween(
-				new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
-					// @ts-ignore
-					nextNode,
-					'resetBlockingTween',
-					0,
-					null,
-					null,
-					null,
-					// @ts-ignore
-					nextNode.canvasShape.shape,
-					['x'],
-					// @ts-ignore
-					[-nextNode.canvasShape.shape.x],
-					15,
-					'linear'
-				)
-			);
-		}, this);
-		this.rolloverRefs[UID].leafTweens.length = 0;
-	}
-}
+
 
 /**
  * @method refreshPositionsForNodeElasticity
@@ -1027,7 +911,10 @@ PlantCreator.prototype.refreshPositionsForNodeElasticity = function(node, curren
 		branchToUpdate.updateGrownBranchCoordinates(newPositions[1], newPositions[2]);
 }
 
-
+/**
+ * @static @property {Number} baseHoverEffectDuration
+ */
+PlantCreator.prototype.baseHoverEffectDuration = 60
 
 
 

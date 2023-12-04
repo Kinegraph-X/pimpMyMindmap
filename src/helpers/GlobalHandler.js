@@ -10,6 +10,7 @@ const KeyboardEvents = require('src/events/JSKeyboardMap');
 const ApiHelper = require('src/helpers/ApiHelper');
 
 const {themeDescriptors} = require('src/GameTypes/gameSingletons/gameConstants');
+const {Point} = require('src/GameTypes/gameSingletons/CoreTypes');
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
 
@@ -40,6 +41,7 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	this.startLoadingSpinner();
 	
 	this.hookKeyboard();
+	document.addEventListener('mousemove', this.pollMousePosition.bind(this));
 	
 	this.rootNodeSelector = rootNodeSelector;
 	// Force the style here as we're in light theme for the rendering in canvas
@@ -70,6 +72,18 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 }
 //GlobalHandler.prototype = {}
 
+/**
+ * @method handleRecursiveHoverEffect
+ * @param {MouseEvent} e
+ */
+GlobalHandler.prototype.pollMousePosition = function(e) {
+	GameState().lastMousePosition = new Point(
+		GameState().mousePosition.x.value,
+		GameState().mousePosition.y.value
+	)
+	GameState().mousePosition.x.value = e.clientX;
+	GameState().mousePosition.y.value = e.clientY;
+}
 
 GlobalHandler.prototype.getNoAnimationParam = function() {
 	// ANIMATION BYPASS VIA URL

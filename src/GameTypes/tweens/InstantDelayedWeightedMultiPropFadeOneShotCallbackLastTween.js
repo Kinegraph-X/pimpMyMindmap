@@ -7,12 +7,12 @@
  * @typedef {Object} PIXI.Sprite
  */
 const CoreTypes = require('src/GameTypes/gameSingletons/CoreTypes');
-const GameState = require('src/GameTypes/gameSingletons/GameState');
+const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
 const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
 
 
 /**
- * @constructor DelayedWeightedMultiPropFadeOneShotCallbackLastTween
+ * @constructor InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween
  * @param {BranchSprite|LeafSprite|BranchletSprite} target
  * @param {String} cbName
  * @param {Number} delay
@@ -25,7 +25,8 @@ const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
  * @param {Number} transformDuration
  * @param {String} easingFunctionName
  */
-const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = function(target, cbName, delay, argsAsArray = [], scope = null, scopedPropName = '', fadedTarget, affectedProps, offsets, transformDuration, easingFunctionName) {
+const InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween = function(target, cbName, delay, argsAsArray = [], scope = null, scopedPropName = '', fadedTarget, affectedProps, offsets, transformDuration, easingFunctionName) {
+	this.rootTimestamp = GameLoop().currentTime;
 	DelayedTween.call(this, target, undefined, undefined, undefined, delay);
 	this.cbName = cbName;
 	this.argsAsArray = argsAsArray || new Array();
@@ -38,7 +39,6 @@ const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = function(target, cb
 	this.callbackCalled = false;
 	this.currentFrame = 0;
 	this.weights = Array();
-	this.easingFunctionName = easingFunctionName;
 	this.getWeightsFromEasingFunction(easingFunctionName);
 	this.originalValues= {};
 	this.affectedProps.forEach(function(propName) {
@@ -48,8 +48,8 @@ const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = function(target, cb
 			this.originalValues[propName] = this.fadedTarget[propName];
 	}, this);
 }
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype = Object.create(DelayedTween);
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.objectType = 'DelayedWeightedMultiPropFadeOneShotCallbackLastTween';
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype = Object.create(DelayedTween);
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.objectType = 'InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween';
 
 /**
  * @method nextStep
@@ -58,12 +58,12 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.objectType = 'Del
  * @param {Number} timestamp
  * @return Void
  */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
 	let offset = 0,
 		currentWeight = 0;
 	this.lastStepTimestamp = timestamp;
 	// @ts-ignore inherited property
-	if (timestamp < GameState().rootTimestamp + this.offsetFromRootTimestamp)
+	if (timestamp < this.rootTimestamp + this.offsetFromRootTimestamp)
 		return;
 	
 	// @ts-ignore baseFrameDuration is inherited
@@ -80,34 +80,18 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.nextStep = functi
 	// @ts-ignore transformDuration is inherited
 	if (this.currentFrame >= this.transformDuration) {
 		this.ended = true;
-		if (this.easingFunctionName === 'easeOutStaticElastic') {
-			// force end of animation
-			this.affectedProps.forEach(function(propName, key) {
-				// @ts-ignore transformInterval is inherited
-				offset = this.offsets[key];
-				if (propName === 'scale') {
-					// @ts-ignore PIXI
-					this.fadedTarget[propName].set(this.originalValues[propName]);
-				}
-				else
-					// @ts-ignore PIXI
-					this.fadedTarget[propName] = this.originalValues[propName];
-			}, this);
-		}
-		else {
-			// prevent overflow
-			this.affectedProps.forEach(function(propName, key) {
-				// @ts-ignore transformInterval is inherited
-				offset = this.offsets[key];
-				if (propName === 'scale') {
-					// @ts-ignore PIXI
-					this.fadedTarget[propName].set(this.originalValues[propName] * offset);
-				}
-				else
-					// @ts-ignore PIXI
-					this.fadedTarget[propName] = (new CoreTypes.Coord(this.originalValues[propName]))[this.type](offset);
-			}, this);
-		}
+		// prevent overflow
+		this.affectedProps.forEach(function(propName, key) {
+			// @ts-ignore transformInterval is inherited
+			offset = this.offsets[key];
+			if (propName === 'scale') {
+				// @ts-ignore PIXI
+				this.fadedTarget[propName].set(this.originalValues[propName] * offset);
+			}
+			else
+				// @ts-ignore PIXI
+				this.fadedTarget[propName] = (new CoreTypes.Coord(this.originalValues[propName]))[this.type](offset);			
+		}, this);
 		
 		if (this.scope) {
 			this.callbackCalled = true;
@@ -135,7 +119,7 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.nextStep = functi
 			}
 			else
 				// @ts-ignore PIXI
-				this.fadedTarget[propName] = (new CoreTypes.Coord(this.originalValues[propName]))[this.type](offset);
+				this.fadedTarget[propName] = (new CoreTypes.Coord(this.originalValues[propName]))[this.type](offset);			
 		}, this);
 	}
 }
@@ -143,7 +127,7 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.nextStep = functi
 /**
  * @method testOutOfScreen
  */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.testOutOfScreen = function() {
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.testOutOfScreen = function() {
 	return false;
 }
 
@@ -151,7 +135,7 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.testOutOfScreen =
  * @method getWeightsFromEasingFunction
  * @param {String} easingFunction
  */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.getWeightsFromEasingFunction = function(easingFunction) {
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.getWeightsFromEasingFunction = function(easingFunction) {
 	// @ts-ignore Why aren't prop names strings ?
 	return this[easingFunction]();
 }
@@ -159,7 +143,7 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.getWeightsFromEas
 /**
  * @method easeOutElastic
  */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutElastic = function() {
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutElastic = function() {
 	let frameIdx = 0; // * this.transformDuration
 	for (let i = 0; i <= 1;  i +=  1 / this.transformDuration) {
 		this.weights[frameIdx] = Math.pow(1 - i, 2) * Math.sin(i * 5 * Math.PI - Math.PI / 2) + 1;
@@ -168,20 +152,9 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutElastic = 
 }
 
 /**
- * @method easeOutElastic
- */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutStaticElastic = function() {
-	let frameIdx = 0; // * this.transformDuration
-	for (let i = 0; i <= 1;  i +=  1 / this.transformDuration) {
-		this.weights[frameIdx] = Math.pow(1 - i, 2) * Math.sin(i * 5 * Math.PI);
-		frameIdx++;
-	}
-}
-
-/**
  * @method easeOutCosOvershoot
  */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutCosOvershoot = function() {
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutCosOvershoot = function() {
 	let frameIdx = 0; // * this.transformDuration
 	for (let i = 0; i <= 1;  i +=  1 / this.transformDuration) {
 		this.weights[frameIdx] = (Math.pow(-i, 2) * Math.cos(i * 1.99 * Math.PI) + 2) * Math.pow(i, 2) * (3 - 2 * i) * i;
@@ -192,16 +165,17 @@ DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.easeOutCosOversho
 /**
  * @method easeOutCosOvershoot
  */
-DelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.linear = function() {
+InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween.prototype.linear = function() {
 	let frameIdx = 0; // * this.transformDuration
 	for (let i = 0; i <= 1;  i +=  1 / this.transformDuration) {
 		this.weights[frameIdx] = i;
 		frameIdx++;
 	}
+//	console.log(this.weights);
 }
 
 
 
 
 
-module.exports = DelayedWeightedMultiPropFadeOneShotCallbackLastTween;
+module.exports = InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween;

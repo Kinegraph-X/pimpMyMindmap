@@ -1,4 +1,5 @@
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
+const {Point} = require('src/GameTypes/gameSingletons/CoreTypes');
 
 /**
  * @constructor GameState
@@ -7,6 +8,8 @@ const GameState = function() {
 	this.rootTimestamp = +Infinity;
 	this.currentTheme = 'midi';
 	this.animableState = true;
+	this.lastMousePosition = new Point(0, 0);
+	this.mousePosition = new Point(0, 0);
 }
 //GameState.prototype = {};
 
