@@ -25,7 +25,7 @@ const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
  * @param {Number} transformDuration
  * @param {String} easingFunctionName
  */
-const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = function(target, cbName, delay, argsAsArray = [], scope = null, scopedPropName = '', fadedTarget, affectedProps, offsets, transformDuration, easingFunctionName) {
+const DelayedWeightedMultiPropFadeOneShotCallbackLastTween = function(target, cbName, delay, argsAsArray = [], scope = null, scopedPropName = '', fadedTarget, affectedProps = [], offsets, transformDuration, easingFunctionName) {
 	DelayedTween.call(this, target, undefined, undefined, undefined, delay);
 	this.cbName = cbName;
 	this.argsAsArray = argsAsArray || new Array();

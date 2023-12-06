@@ -8,6 +8,7 @@ const {EventEmitter} = require('src/core/CoreTypes');
 const CoreTypes = require('src/GameTypes/gameSingletons/CoreTypes');
 const gridManager = require('src/GameTypes/grids/gridManager');
 const {eventNames} = require('src/GameTypes/gameSingletons/gameConstants');
+const GameState = require('src/GameTypes/gameSingletons/GameState');
 //const ruleSet = require('src/GameTypes/gameSingletons/gameRules');
 
 /**
@@ -91,6 +92,7 @@ GameLoop.prototype.FrameGroup = function(initialVal) {
  
 GameLoop.prototype.start = function() {
 	let self= this,
+		loopStepCount = 0,
 		stepCount = 0,
 		previousTimeStamp = 0,
 		frameDuration = 0,
@@ -120,7 +122,10 @@ GameLoop.prototype.start = function() {
 			return;
 		}
 		
+		loopStepCount = Math.round((timestamp - previousTimeStamp) / stdFrameDuration);
+		GameState().syncedUpdateMouseVector(loopStepCount);
 		previousTimeStamp = timestamp;
+		
 		
 //		performance.mark('benchmark');
 

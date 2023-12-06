@@ -212,7 +212,7 @@ ComponentsHelper.prototype.createMapComponent = function(mapData, alignment) {
  */
 ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 	// @ts-ignore Component isn't typed
-	this.rootViewComponent.removeChildAt(2);
+	this.rootViewComponent.removeChildAt(3);
 	// @ts-ignore Component isn't typed
 	this.linkedTreeInstance = new App.componentTypes.LinkedTreeComponent(
 		this.linkedTreeComponentDef,
@@ -222,9 +222,9 @@ ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 		mapData,
 		alignment
 	);
+	// NaiveDOMNode needs a ref to the DOM view... Shade...
 	// @ts-ignore App isn't typed
 //	new App.DelayedDecoration();
-	App.Ignition.prototype.cleanRegisters();
 }
 
 
@@ -258,9 +258,16 @@ ComponentsHelper.prototype.hackyThemeSelectorDecorator = function () {
 	/** @type {HTMLOptionElement} */
 		opt, 
 		i = 1;
+	
+	// First take advantage of the batched DOM rendering
+	const itemList = [];
 	for(let themeName in themeDescriptors) {
-		this.themeListSelector.typedSlots[0].push(this.themeListSelector.typedSlots[0].newItem(themeName));
-		
+		itemList.push(this.themeListSelector.typedSlots[0].newItem(themeName));
+	}
+	this.themeListSelector.typedSlots[0].pushApply(itemList);
+	
+	// Then hack the whole stack with random DOM insertions (but we have faith in the implicit batching of the Browser)
+	for(let themeName in themeDescriptors) {
 		span = document.createElement('span');
 		// @ts-ignore extended native
 		span.textContent = themeName;//.capitalizeFirstChar();

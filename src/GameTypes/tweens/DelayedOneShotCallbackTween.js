@@ -1,3 +1,6 @@
+/**
+ * @typedef {import('src/GameTypes/Sprites/Sprite')} Sprite
+ */
 
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
@@ -5,8 +8,9 @@ const DelayedTween = require('src/GameTypes/tweens/DelayedTween');
 
 /**
  * @constructor DelayedOneShotCallbackTween
- * @param {() => Void} cb
- * @param {Number} interval
+ * @param {Sprite} target
+ * @param {String} cbName
+ * @param {Number} delay
  * @param {Array<Object>} argsAsArray
  * @param {Object|null} scope
  * @param {String} propName
@@ -29,6 +33,7 @@ DelayedOneShotCallbackTween.prototype.objectType = 'DelayedOneShotCallbackTween'
  * @return Void
  */
 DelayedOneShotCallbackTween.prototype.nextStep = function(stepCount, frameDuration, timestamp) {
+	// @ts-ignore offsetFromRootTimestamp is inherited
 	if (timestamp < GameState().rootTimestamp + this.offsetFromRootTimestamp)
 		return;
 	
@@ -37,12 +42,11 @@ DelayedOneShotCallbackTween.prototype.nextStep = function(stepCount, frameDurati
 		// @ts-ignore cause we can't explicitly declare the type of "scope"
 		return this.target[this.cbName](this.scope[this.propName]);
 	else if (this.argsAsArray.length) {
-//		console.log(this.argsAsArray);
-//		setTimeout(this.target[this.cbName].bind(this.target, this.argsAsArray[0]), 64);
+		// @ts-ignore target is inherited
 		return this.target[this.cbName].apply(this.target, this.argsAsArray);
 	}
 	else {
-//		setTimeout(this.target[this.cbName].bind(this.target), 64);
+		// @ts-ignore target is inherited
 		return this.target[this.cbName]();
 	}
 

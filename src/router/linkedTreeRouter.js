@@ -53,6 +53,14 @@ var classConstructor = function() {
 		 * 	initEndpoints
 		 *  getMapData
 		 */
+		const dumbClickableInit = function() {
+			console.log('click');
+			// @ts-ignore Framework's component
+			globalHandler.componentsHelper.rootViewComponent._children[2].view.getMasterNode().style.display = 'none';
+			globalHandler.startLoadingSpinner();
+			globalHandler.componentsHelper.handleNewMapData(globalHandler.mapData, globalHandler.alignment);
+			document.removeEventListener('mouseup', dumbClickableInit);
+		}
 		
 		// WAIT FOR THE FONT & LAUNCH !!!!!!!!!!! RASTER RENDERING
 		/* Fontfaceobserver : (from the github) 
@@ -66,7 +74,7 @@ var classConstructor = function() {
 		);
 		(new FontFaceObserver('roboto')).load(null, 10000).then(function() {
 			AssetsLoader.then(function() {
-				globalHandler.componentsHelper.handleNewMapData(globalHandler.mapData, globalHandler.alignment);
+				document.addEventListener('mouseup', dumbClickableInit);
 				if (GameState().animableState === false)
 					globalHandler.stopLoadingSpinner();
 			});

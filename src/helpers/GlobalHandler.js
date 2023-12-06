@@ -38,10 +38,9 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	GameState().animableState = this.getNoAnimationParam();
 	this.readyElem;
 	this.getLoadingSpinner();
-	this.startLoadingSpinner();
 	
 	this.hookKeyboard();
-	document.addEventListener('mousemove', this.pollMousePosition.bind(this));
+	
 	
 	this.rootNodeSelector = rootNodeSelector;
 	// Force the style here as we're in light theme for the rendering in canvas
@@ -72,18 +71,7 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 }
 //GlobalHandler.prototype = {}
 
-/**
- * @method handleRecursiveHoverEffect
- * @param {MouseEvent} e
- */
-GlobalHandler.prototype.pollMousePosition = function(e) {
-	GameState().lastMousePosition = new Point(
-		GameState().mousePosition.x.value,
-		GameState().mousePosition.y.value
-	)
-	GameState().mousePosition.x.value = e.clientX;
-	GameState().mousePosition.y.value = e.clientY;
-}
+
 
 GlobalHandler.prototype.getNoAnimationParam = function() {
 	// ANIMATION BYPASS VIA URL
@@ -100,6 +88,8 @@ GlobalHandler.prototype.appendGameView = function() {
 GlobalHandler.prototype.getLoadingSpinner = function() {
 	// @type {HTMLDivElement}
 	this.readyElem = document.querySelector('#ready');
+	// @ts-ignore style
+	this.readyElem.style.display = 'none';
 //	// @ts-ignore style isn't a prop of Element ? wtf! https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/style
 //	this.readyElem.style.visibility = 'visible';
 	const loadingSpinner = document.querySelector('#loading_spinner_3');
@@ -116,7 +106,7 @@ GlobalHandler.prototype.getLoadingSpinner = function() {
 }
 
 GlobalHandler.prototype.startLoadingSpinner = function() {
-	// @ts-ignore
+	// @ts-ignore style
 	this.readyElem.style.display = 'flex';
 }
 
@@ -135,6 +125,7 @@ GlobalHandler.prototype.hookKeyboard = function() {
 			GameLoop().stop();
 		}
 //		if (keyCode === KeyboardEvents.indexOf('SPACE')) {
+//			console.log('rootTimestamp set :', GameLoop().currentTime / GameLoop().firstFramesDuration.chosen, 'frames');
 //			GameState().setRootTimestamp(GameLoop().currentTime);
 //		}
 		if (keyCode === KeyboardEvents.indexOf('E') && ctrlKey) {

@@ -48,14 +48,13 @@ const InstantDelayedWeightedMultiPropFadeOneShotCallbackLastTween = require('src
 
 /**
  * @constructor RolloverRef
- * @param {Point} vector
  */
-const MouseVector = function(vector) {
-	this.vector = vector;
-	this.speed = this.getSpeed();
+const MouseVector = function() {
+	this.vector = GameState().mouseVector;
+	this.speed = this.getSpeed() / 10;
 }
 MouseVector.prototype.getSpeed = function() {
-	return Math.hypot(this.vector.x.value, this.vector.y.value);
+	return Math.hypot(this.vector.x.value, this.vector.y.value) / GameState().lastFrameCount;
 }
 
 /**
@@ -103,6 +102,10 @@ const RolloverRef = function(node, currentOrigin  = null) {
 const PlantCreator = function(layoutTree) {
 	// @ts-ignore PIXI
 	PIXI.settings.FILTER_RESOLUTION = .5;
+	this.hoverEffectEnabled = GameState().animableState ? false : true;
+	// Extremely dirty mock...
+	this.animationBlockingTween = new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(null, null, null, null, null, null, null, undefined, null, null, 'linear');
+	this.animationBlockingTween.ended = true;
 	
 	this.layoutTree = layoutTree;
 	this.themeOptions = themeDescriptors[GameState().currentTheme];
@@ -201,6 +204,7 @@ PlantCreator.prototype.getBranches = function() {
 		effectiveDuration = 0,
 		branchOptions = new BranchOptions(),
 		isNodeDepth = false,
+		isLeafDepth = false,
 		candidateParent,
 		/** @type {LayoutNode} */
 		currentOrigin,
@@ -221,7 +225,7 @@ PlantCreator.prototype.getBranches = function() {
 	 	debugSeen = false;
 	 	
 	while(currentDepth <= maxDepth) {
-		isNodeDepth = false;
+		isNodeDepth = isLeafDepth = false;
 		this.layoutTree[currentDepth.toString()].forEach(function(node, key) {
 //			console.log(node.nodeName);
 			if ((node.nodeName !== branchNodeName && node.nodeName !== leafNodeName && node.nodeName !== textNodeName && node.nodeName !== 'subTextNode') || debugSeen)
@@ -411,6 +415,7 @@ PlantCreator.prototype.getBranches = function() {
 				}
 			}
 			else if (node.nodeName === leafNodeName) {
+				isLeafDepth = true;
 				// @ts-ignore
 				this.rolloverRefs[node._UID] = new RolloverRef(node, currentOrigin);
 				
@@ -579,12 +584,18 @@ PlantCreator.prototype.getBranches = function() {
 			}
 		}, this);
 		 
-		if (isNodeDepth) {
+		if (isNodeDepth || isLeafDepth) {
 //			console.log('UpdateDelta', deltaTime, deltaTimeOffset);
-			deltaTime += deltaTimeOffset * 2;
+			deltaTime += effectiveDuration;
 		}
 		currentDepth += 1;
 	 }
+	 
+	 console.log(deltaTime);
+	 GameLoop().unshiftTween(
+		 // @ts-ignore : we hacked the tween with a non-sprite target
+		 new DelayedOneShotCallbackTween(this, 'enableHoverEffect', deltaTime)
+	 );
 }
 
 /**
@@ -712,19 +723,38 @@ PlantCreator.prototype.getRandomFruitAsBool = function() {
 }
 
 
+/**
+ * @method enableHoverEffect
+ */
+PlantCreator.prototype.enableHoverEffect = function() {
+	this.hoverEffectEnabled = true;
+}
+
+///**
+// * @method updateAnimationStartedOnNode
+// * @param {DelayedWeightedMultiPropFadeOneShotCallbackLastTween} tween
+// */
+//PlantCreator.prototype.setEffectiveBlockingTweenOnAnimationStartedNode = function(tween) {
+//	// @ts-ignore too lazy to mock a tween-typed prop on LayoutNode (by all means it's a hack for now)
+//	this.animationStartedOnNode.blockingTween = tween;
+//}
+
 
 /**
  * @method getMouseVector
  * @return {MouseVector}
  */
 PlantCreator.prototype.getMouseVector = function() {
-	return new MouseVector(
-			new Point(
-			GameState().mousePosition.x.value - GameState().lastMousePosition.x.value,
-			GameState().mousePosition.y.value - GameState().lastMousePosition.y.value
-		)
-	);
+	return new MouseVector();
 }
+
+///**
+// * @method updateAnimationStartedOnNode
+// */
+//PlantCreator.prototype.updateAnimationStartedOnNode = function() {
+//	this.animationStartedOnNode;
+//}
+
 
 
 
@@ -733,6 +763,9 @@ PlantCreator.prototype.getMouseVector = function() {
  * @param {String} UID
  */
 PlantCreator.prototype.handleRecursiveHoverEffect = function(UID) {
+	if (!this.hoverEffectEnabled || !this.animationBlockingTween.ended || this.themeOptions.disableHoverEffect)
+		return;
+	this.animationBlockingTween;
 	const mouseVector = this.getMouseVector();
 	this.effectiveRecursiveHoverEffect(UID, mouseVector, 0);
 }
@@ -761,8 +794,6 @@ PlantCreator.prototype.effectiveRecursiveHoverEffect = function(UID, mouseVector
  */
 PlantCreator.prototype.ActivateNodeHoverEffect = function(UID, mouseVector, depth) {
 	const node = this.rolloverRefs[UID].node;
-	if (node.blockingTween)
-		return;
 	
 	// @ts-ignore too lazy to mock a tween-typed prop on LayoutNode (by all means it's a hack for now)
 	node.blockingTween = new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
@@ -861,11 +892,12 @@ PlantCreator.prototype.ActivateNodeHoverEffect = function(UID, mouseVector, dept
 		);
 	}
 	
+	const self = this;
 	// @ts-ignore
 	if (this.rolloverRefs[UID].nextBranch.length && this.rolloverRefs[UID].nextBranch[0].objectType === 'LeafSprite') {
 		this.rolloverRefs[UID].nextNode.forEach(function(nextNode) {
 			this.rolloverRefs[UID].leafTweens.push(
-				new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
+				(self.animationBlockingTween = new DelayedWeightedMultiPropFadeOneShotCallbackLastTween(
 					// @ts-ignore
 					nextNode,
 					'resetBlockingTween',
@@ -879,7 +911,7 @@ PlantCreator.prototype.ActivateNodeHoverEffect = function(UID, mouseVector, dept
 					[mouseVector.vector.x.value * mouseVector.speed / 5, mouseVector.vector.y.value * mouseVector.speed / 5],
 					this.baseHoverEffectDuration * (depth + 1) * .75,
 					'easeOutStaticElastic'
-				)
+				))
 			);
 			GameLoop().unshiftTween(
 				this.rolloverRefs[UID].leafTweens[this.rolloverRefs[UID].leafTweens.length - 1]

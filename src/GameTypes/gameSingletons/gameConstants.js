@@ -44,6 +44,7 @@ const curveTypes = {
  * @param {Array<Number>|Null} branchletStepIndicesforLeaves
  * @param {Number|Null} maxDurationForBranchlets
  * @param {String|Null} curveType
+ * @param {Boolean|Null} disableHoverEffect
  */
 const ThemeDescriptorsFactory = function(
 	id,
@@ -57,7 +58,8 @@ const ThemeDescriptorsFactory = function(
 	branchletStepIndicesforBranches,
 	branchletStepIndicesforLeaves,
 	maxDurationForBranchlets,
-	curveType
+	curveType,
+	disableHoverEffect = false
 ) {
 	this.id = id;
 	this.showBranchFruits = showBranchFruits ?? true;
@@ -71,6 +73,7 @@ const ThemeDescriptorsFactory = function(
 	this.branchletStepIndicesforLeaves = branchletStepIndicesforLeaves ?? [];
 	this.maxDurationForBranchlets = maxDurationForBranchlets ?? 8
 	this.curveType = curveType ?? 'singleQuad';
+	this.disableHoverEffect = disableHoverEffect;
 }
 
 /**
@@ -103,7 +106,8 @@ const themeDescriptors = {
 		[2, 3, 5, 6, 9, 10],
 		[1, 3, 6],
 		null,
-		null
+		null,
+		true
 	),
 	'80s' : new ThemeDescriptorsFactory(
 		2,
