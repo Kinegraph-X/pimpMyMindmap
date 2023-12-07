@@ -54,7 +54,6 @@ var classConstructor = function() {
 		 *  getMapData
 		 */
 		const dumbClickableInit = function() {
-			console.log('click');
 			// @ts-ignore Framework's component
 			globalHandler.componentsHelper.rootViewComponent._children[2].view.getMasterNode().style.display = 'none';
 			globalHandler.startLoadingSpinner();

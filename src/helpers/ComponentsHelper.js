@@ -32,6 +32,7 @@ const BgSprite = require('src/GameTypes/sprites/BgSprite');
 const linkedTreeInitializer = require('src/clientRoutes/linkedTreeInitializer');
 
 const PlantCreator = require('src/router/PlantCreator');
+const naiveTextIndentedListParser = require('src/router/naiveTextIndentedListParser');
 
 
 
@@ -87,7 +88,10 @@ const ComponentsHelper = function() {
 	this.createRootComponent();
 	this.getMapSelectorComponent();
 	this.getThemeSelectorComponent();
+	this.hookCreateMapForm();
 	
+	// @ts-ignore inherited method
+	this.createEvent('newMapData');
 	// @ts-ignore inherited method
 	this.createEvent('newLayoutReady');
 	// @ts-ignore inherited method
@@ -177,6 +181,10 @@ ComponentsHelper.prototype.createRootComponent = function() {
 	);
 	// @ts-ignore Component isn't typed
 	this.pixiRendererComponent = this.rootViewComponent._children[1];
+	// @ts-ignore Component isn't typed
+	this.createMapModalComponent = this.rootViewComponent._children[3];
+	// @ts-ignore Component isn't typed
+	this.menuBar = this.rootViewComponent._children[0];
 }
 
 /**
@@ -212,7 +220,7 @@ ComponentsHelper.prototype.createMapComponent = function(mapData, alignment) {
  */
 ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 	// @ts-ignore Component isn't typed
-	this.rootViewComponent.removeChildAt(3);
+	this.rootViewComponent.removeChildAt(4);
 	// @ts-ignore Component isn't typed
 	this.linkedTreeInstance = new App.componentTypes.LinkedTreeComponent(
 		this.linkedTreeComponentDef,
@@ -231,13 +239,13 @@ ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 
 ComponentsHelper.prototype.getMapSelectorComponent = function() {
 	// @ts-ignore Component isn't typed
-	this.mapListSelector = this.rootViewComponent._children[0]._children[1];
+	this.mapListSelector = this.rootViewComponent._children[0]._children[2];
 	this.hookLoadMapEventOnMapsSelector();
 }
 
 ComponentsHelper.prototype.getThemeSelectorComponent = function() {
 	// @ts-ignore Component isn't typed
-	this.themeListSelector = this.rootViewComponent._children[0]._children[2];
+	this.themeListSelector = this.rootViewComponent._children[0]._children[3];
 	this.hackyThemeSelectorDecorator();
 	this.hookLoadThemeEventOnThemeSelector();
 }
@@ -322,6 +330,34 @@ ComponentsHelper.prototype.hookLoadThemeEventOnThemeSelector = function () {
 		);
 	}
 	this.themeListSelector.addEventListener('update', cb.bind(this));
+}
+
+/**
+ * @method hookCreateMapForm
+ */
+ComponentsHelper.prototype.hookCreateMapForm = function () {
+	const self = this;
+	
+	this.menuBar._children[1]._children[1].onclicked_ok = function() {self.createMapModalComponent.streams.hidden.value = false;}
+	
+	// @ts-ignore Component isn't typed
+	const createMapForm = this.createMapModalComponent._children[0];
+	this.createMapModalComponent.streams.hidden.value = true;
+	// Menu Option : "Save a Definition"
+	createMapForm.onsubmit = function() {
+		if (!createMapForm.data.get('mapcontent'))
+			return;
+	
+		try {
+			const mapData = new naiveTextIndentedListParser(createMapForm.data.get('mapcontent'));
+			// @ts-ignore inherited method
+			self.trigger('newMapData', mapData.result);
+			this.createMapModalComponent.streams.hidden.value = true;
+		}
+		catch (e) {
+			createMapForm._children[1]._children[0].setTooltipContentAndShow('The text seems badly formatted');
+		}
+	}
 }
 
 ComponentsHelper.prototype.createBgSprite = function() {

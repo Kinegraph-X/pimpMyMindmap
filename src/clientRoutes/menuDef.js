@@ -28,25 +28,6 @@ var DevToolsMenu = function(uniqueID, options, model) {
 			section : 0
 		}),
 		members : [
-//			DF.createDef({
-//				host : DF.createDef({
-//					type : 'ComponentWithView',
-//					nodeName : 'app-title',
-//					sWrapper : CreateStyle([
-//						{
-//							selector : ':host',
-//							backgroundImage : 'url("plugins/DevToolsStruct/ressources/Formant_Logo_64_V4_w_text.png")',
-//							backgroundRepeat : 'no-repeat',
-//							backgroundPosition : 'center left',
-//							backgroundSize : 'contain',
-//							display : 'inline-block',
-//							width : '143px',
-//							height : '44px',
-//							marginLeft : '12px',
-//						}
-//					])
-//				})
-//			}),
 			DF.createDef({
 				host : DF.createDef({
 					type : 'SimpleText',
@@ -71,13 +52,48 @@ var DevToolsMenu = function(uniqueID, options, model) {
 			}),
 			DF.createDef({
 				host : DF.createDef({
+					type : 'Menu',
+					isCompound : true,
+					sOverride : [
+						{
+							selector : ':host',
+							color : '#C7C7C7',
+							height : 'auto',
+							marginLeft : '121px',
+							paddingTop : '2px',
+							borderRadius : '7px'
+						}
+					]
+				}),
+				members : [
+					DF.createDef({
+						host : DF.createDef({
+							type : 'SimpleText',
+							nodeName : 'menu-title',
+							props : [
+								{text : 'Create'}
+							]
+						})
+					}),
+					DF.createDef({
+						host : DF.createDef({
+							type : 'MenuOption',
+							props : [
+								{title : 'Create your map...'}
+							]
+						})
+					})
+				]
+			}),
+			DF.createDef({
+				host : DF.createDef({
 					type : 'SelectInput',
 					isCompound : true,
 					sOverride : [
 						{
 							selector : ':host',
 							position : 'absolute',
-							marginLeft : '27%'
+							marginLeft : '28%'
 						}
 					],
 					props : [
@@ -93,7 +109,7 @@ var DevToolsMenu = function(uniqueID, options, model) {
 						{
 							selector : ':host',
 							position : 'absolute',
-							marginLeft : '51%'
+							marginLeft : '50%'
 						}
 					],
 					props : [

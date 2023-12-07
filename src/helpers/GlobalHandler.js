@@ -58,6 +58,8 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	
 	this.componentsHelper = new ComponentsHelper();
 	// @ts-ignore inherited method
+	this.componentsHelper.addEventListener('newMapData', this.handleNewMapData.bind(this));
+	// @ts-ignore inherited method
 	this.componentsHelper.addEventListener('newLayoutReady', this.handleNewLayout.bind(this));
 	// @ts-ignore inherited method
 	this.componentsHelper.addEventListener('mapChanged', this.handleMapChanged.bind(this));
