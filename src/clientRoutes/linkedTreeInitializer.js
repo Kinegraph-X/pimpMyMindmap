@@ -13,6 +13,7 @@ var CreateStyle = require('src/UI/generics/GenericStyleConstructor');
 
 const createModalBoxDef = require('src/UI/packages/boxes/BigModalBox/packageComponentDefs/VeryBigModalBoxHostDef');
 const createLoadMapBoxFormComponentOverrideDef = require('src/clientRoutes/loadMapFormComponentOverrideDef');
+const editLoadMapBoxFormComponentOverrideDef = require('src/clientRoutes/editMapFormComponentOverrideDef');
 const createMenuDef = require('src/clientRoutes/menuDef');
 
 
@@ -58,6 +59,18 @@ var rootViewInitializer = function(options) {
 			loadMapFormBox
 		);
 		
+		const editMapFormBox = new App.componentTypes.BigModalBox(
+			createModalBoxDef(),
+			parentView,
+			parent
+		);
+		
+		var editMapForm = new App.componentTypes.FormComponent(
+			editLoadMapBoxFormComponentOverrideDef(),
+			editMapFormBox.view,
+			editMapFormBox
+		);
+		
 		
 		const introTextDef = TypeManager.createDef({
 			host : TypeManager.createDef({
@@ -82,6 +95,10 @@ var rootViewInitializer = function(options) {
 						{
 							selector : ':host p',
 							fontWeight : "bold"
+						},
+						{
+							selector : ':host li',
+							marginLeft : "12px"
 						},
 						{
 							selector : ':host span.welcome',
@@ -131,7 +148,7 @@ var rootViewInitializer = function(options) {
 						TypeManager.createDef({
 							nodeName : 'p',
 							attributes : [
-								{innerHTML : 'You can use a map you\'ve already created by inserting its indented text representation in the <i>load you map</i> button or add a map_id from another site (currently only wisemap.ai) in the url.'}
+								{innerHTML : 'You can use a map you\'ve already created in another website or write it directly here in an indented text representation (<i>Create you map</i> button) or add a map_id from another site (currently only wisemap.ai) in the url.'}
 							]
 						}),
 						TypeManager.createDef({
@@ -144,7 +161,7 @@ var rootViewInitializer = function(options) {
 						TypeManager.createDef({
 							nodeName : 'span',
 							attributes : [
-								{innerHTML : '&nbsp; or read a quick "tech" presentation of this project, which brings some of my projects alltogether:'}
+								{innerHTML : '&nbsp; or read a quick "tech" presentation of this project, which brings some of my projects all together:'}
 							]
 						}),
 						TypeManager.createDef({
@@ -178,7 +195,17 @@ var rootViewInitializer = function(options) {
 						]
 					})
 				}),
-				
+				TypeManager.createDef({
+					host : TypeManager.createDef({
+						type : 'SimpleText',
+						nodeName : 'li',
+						props : [
+							{text : `
+							"use what you already know", here a standard ul/li structure & scoped CSS-in-JS
+							`}
+						]
+					})
+				}),
 				TypeManager.createDef({
 					host : TypeManager.createDef({
 						type : 'SimpleText',
@@ -196,7 +223,7 @@ var rootViewInitializer = function(options) {
 						nodeName : 'li',
 						props : [
 							{text : `
-							it uses a standard ul/li structure behind the scene + custom scoped CSS-in-JS
+							in-house stylesheets & layout-engine: Formant "matches" and "cascades" by itself
 							`}
 						]
 					})
@@ -207,18 +234,7 @@ var rootViewInitializer = function(options) {
 						nodeName : 'li',
 						props : [
 							{text : `
-							in-house stylesheets & layout-engine: it "matches" and "cascades" by itself
-							`}
-						]
-					})
-				}),
-				TypeManager.createDef({
-					host : TypeManager.createDef({
-						type : 'SimpleText',
-						nodeName : 'li',
-						props : [
-							{text : `
-							at this step, you have absolute coordinates of objects in canvas for "free"
+							at this step, you have the absolute coordinates of the canvas-objects "for free"
 							`}
 						]
 					})

@@ -37,6 +37,7 @@ const naiveTextIndentedListParser = require('src/router/naiveTextIndentedListPar
 
 
 
+
 		 /* 
 		 * componentHelper
 		 * 	createRootComponent
@@ -89,6 +90,7 @@ const ComponentsHelper = function() {
 	this.getMapSelectorComponent();
 	this.getThemeSelectorComponent();
 	this.hookCreateMapForm();
+	this.hookEditMapForm();
 	
 	// @ts-ignore inherited method
 	this.createEvent('newMapData');
@@ -184,6 +186,8 @@ ComponentsHelper.prototype.createRootComponent = function() {
 	// @ts-ignore Component isn't typed
 	this.createMapModalComponent = this.rootViewComponent._children[3];
 	// @ts-ignore Component isn't typed
+	this.editMapModalComponent = this.rootViewComponent._children[4];
+	// @ts-ignore Component isn't typed
 	this.menuBar = this.rootViewComponent._children[0];
 }
 
@@ -220,7 +224,7 @@ ComponentsHelper.prototype.createMapComponent = function(mapData, alignment) {
  */
 ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 	// @ts-ignore Component isn't typed
-	this.rootViewComponent.removeChildAt(4);
+	this.rootViewComponent.removeChildAt(5);
 	// @ts-ignore Component isn't typed
 	this.linkedTreeInstance = new App.componentTypes.LinkedTreeComponent(
 		this.linkedTreeComponentDef,
@@ -345,9 +349,11 @@ ComponentsHelper.prototype.hookCreateMapForm = function () {
 	this.createMapModalComponent.streams.hidden.value = true;
 	// Menu Option : "Save a Definition"
 	createMapForm.onsubmit = function() {
-		if (!createMapForm.data.get('mapcontent'))
+		if (!createMapForm.data.get('mapcontent'))  {
+			if (!createMapForm._children[1]._children[0].streams.errors.value)
+				createMapForm._children[1]._children[0].streams.errors.value = ['', 'No change has been made.'];
 			return;
-	
+		}
 		try {
 			const mapData = new naiveTextIndentedListParser(createMapForm.data.get('mapcontent'));
 			// @ts-ignore inherited method
@@ -356,6 +362,34 @@ ComponentsHelper.prototype.hookCreateMapForm = function () {
 		}
 		catch (e) {
 			createMapForm._children[1]._children[0].setTooltipContentAndShow('The text seems badly formatted');
+		}
+	}
+}
+
+/**
+ * @method hookEditMapForm
+ */
+ComponentsHelper.prototype.hookEditMapForm = function () {
+	const self = this;
+	
+	// @ts-ignore Component isn't typed
+	const editMapForm = this.editMapModalComponent._children[0];
+	this.editMapModalComponent.streams.hidden.value = true;
+	// Menu Option : "Save a Definition"
+	editMapForm.onsubmit = function() {
+		if (!editMapForm.data.get('mapcontent'))  {
+			if (!editMapForm._children[1]._children[0].streams.errors.value)
+				editMapForm._children[1]._children[0].streams.errors.value = ['', 'No change has been made.'];
+			return;
+		}
+		try {
+			const mapData = new naiveTextIndentedListParser(editMapForm.data.get('mapcontent'));
+			// @ts-ignore inherited method
+			self.trigger('newMapData', mapData.result);
+			this.editMapModalComponent.streams.hidden.value = true;
+		}
+		catch (e) {
+			editMapForm._children[1]._children[0].setTooltipContentAndShow('The text seems badly formatted.');
 		}
 	}
 }

@@ -14,6 +14,8 @@ const {Point} = require('src/GameTypes/gameSingletons/CoreTypes');
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
 
+const naiveObjectToIndentedTextListConverter = require('src/router/naiveObjectToIndentedTextListConverter');
+
 const linkedTreeData = require('src/clientRoutes/mapData');	//  _problem  _partial2
 
 		/*
@@ -65,6 +67,8 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	this.componentsHelper.addEventListener('mapChanged', this.handleMapChanged.bind(this));
 	// @ts-ignore inherited method
 	this.componentsHelper.addEventListener('themeChanged', this.handleThemeChanged.bind(this));
+	
+	this.hookEditMapButton();
 	
 	this.apiHelper.subscribeToMapListEndpoint(this.componentsHelper.mapListSelector);
 	
@@ -149,6 +153,18 @@ GlobalHandler.prototype.hookKeyboard = function() {
 			}, 512);
 		}
 	});
+}
+
+/**
+ * @method hookEditMapButton
+ */
+GlobalHandler.prototype.hookEditMapButton = function() {
+	const self = this;
+	const editMapForm = this.componentsHelper.editMapModalComponent._children[0];
+	this.componentsHelper.menuBar._children[1]._children[2].onclicked_ok = function() {
+		editMapForm.streams.content.value = new naiveObjectToIndentedTextListConverter(self.mapData).result;
+		self.componentsHelper.editMapModalComponent.streams.hidden.value = false;
+	}
 }
 
 /**

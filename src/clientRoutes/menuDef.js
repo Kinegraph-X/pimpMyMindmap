@@ -58,9 +58,10 @@ var DevToolsMenu = function(uniqueID, options, model) {
 						{
 							selector : ':host',
 							color : '#C7C7C7',
-							height : 'auto',
+							height : '27px',
 							marginLeft : '121px',
-							paddingTop : '2px',
+							paddingTop : '0px',
+							marginTop : '1px',
 							borderRadius : '7px'
 						}
 					]
@@ -80,6 +81,14 @@ var DevToolsMenu = function(uniqueID, options, model) {
 							type : 'MenuOption',
 							props : [
 								{title : 'Create your map...'}
+							]
+						})
+					}),
+					DF.createDef({
+						host : DF.createDef({
+							type : 'MenuOption',
+							props : [
+								{title : 'Edit the current map...'}
 							]
 						})
 					})

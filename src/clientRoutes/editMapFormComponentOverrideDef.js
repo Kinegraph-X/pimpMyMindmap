@@ -7,10 +7,11 @@
  * @CSSifyTheme themeName : basic-light
  * 
  */
+// @ts-nocheck
 var TypeManager = require('src/core/TypeManager');
 var CreateStyle = require('src/UI/generics/GenericStyleConstructor');
 
-// @ts-nocheck
+
 
 var FormComponentOverrideDef = function(uniqueID, options, model) {
 	/**@CSSify DEBUG */		// Remove the whitespace between @CSSify and the word DEBUG to trigger debug infos
@@ -25,6 +26,9 @@ var FormComponentOverrideDef = function(uniqueID, options, model) {
 //			states : [
 //				{action : options.prefix + 'verify_password/'}	// form without "action" (FormComponent updated to handle that)
 //			],
+			props : [
+				{content : undefined}
+			],
 			sOverride : [
 				{
 					selector : ':host',
@@ -49,7 +53,7 @@ var FormComponentOverrideDef = function(uniqueID, options, model) {
 					nodeName : 'h3',
 					section : 0,
 					props : [
-						{text : 'Create your pimp\'ed map :'}
+						{text : 'Edit the current map'}
 					]
 				})
 			}),
@@ -59,7 +63,14 @@ var FormComponentOverrideDef = function(uniqueID, options, model) {
 						type : 'Fieldset',
 						section : 0,
 						props : [
-							{slotsTextContent : ['Paste or write the content of your map as a space-indented or tab-indented list']}
+							{slotsTextContent : ['']},
+							{content : undefined}
+						],
+						reactOnParent : [
+							{
+								from : 'content',
+								to : 'content'
+							}
 						]
 					})
 				}),
@@ -71,6 +82,15 @@ var FormComponentOverrideDef = function(uniqueID, options, model) {
 							attributes : [
 								{title : '-Map-Content'},
 		//						{placeholder : ''}
+							],
+							reactOnParent : [
+								{
+									cbOnly : true,
+									from : 'content',
+									subscribe : function(value) {
+										this.setContentFromValueOnMemberView(value, 1);
+									}
+								}
 							]
 						})
 					})
