@@ -171,9 +171,12 @@ PlantCreator.prototype.getRootNode = function() {
 				new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, 'addChild', 0, [this.rootNode.canvasShape.shape], null, null, this.rootNode.canvasShape.shape, 'alpha', 1, this.subInterval)
 			);
 		}
-		else
+		else {
+			// @ts-ignore : LayoutNode type isn't completely mocked
+			this.rootNode.canvasShape.shape.alpha = 1;	// needs to be forced in case we only changed the theme
 			// @ts-ignore : LayoutNode type isn't completely mocked
 			GameLoop().stage.addChild(this.rootNode.canvasShape.shape);
+		}
 	}
 }
  
@@ -382,15 +385,18 @@ PlantCreator.prototype.getBranches = function() {
 				if (this.themeOptions.showNodeBox) {
 					if (GameState().animableState) {
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						node.canvasShape.shape.alpha = 0
+						node.canvasShape.shape.alpha = 0;
 						GameLoop().unshiftTween(
 							// @ts-ignore : LayoutNode type isn't completely mocked
 							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + effectiveDuration + standardFruitFadeDuration * 2, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 						);
 					}
-					else
+					else {
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						node.canvasShape.shape.alpha = 1;	// needs to be forced in case we only changed the theme
 						// @ts-ignore : LayoutNode type isn't completely mocked
 						GameLoop().stage.addChild(node.canvasShape.shape);
+					}
 					
 					// @ts-ignore : LayoutNode type isn't completely mocked
 					node.canvasShape.shape.on('mouseenter', this.handleRecursiveHoverEffect.bind(this, node._UID));
@@ -513,9 +519,12 @@ PlantCreator.prototype.getBranches = function() {
 							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + deltaTimeOffset + standardFruitFadeDuration * 1.5, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
 						);
 					}
-					else
+					else {
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						node.canvasShape.shape.alpha = 1; // needs to be forced in case we only changed the theme
 						// @ts-ignore : LayoutNode type isn't completely mocked
 						GameLoop().stage.addChild(node.canvasShape.shape);
+					}
 				}
 				if (themeDescriptors[GameState().currentTheme].dropShadows) {
 					// @ts-ignore : PIXI.SimpleRope type isn't completely mocked
@@ -537,49 +546,49 @@ PlantCreator.prototype.getBranches = function() {
 				node.canvasShape.shape.interactive = true;
 			}
 			else if (node.nodeName === textNodeName || node.nodeName === subTextNodeName) {
-				// @ts-ignore : LayoutNode type isn't completely mocked
-				if (node._parent.nodeName === spanNodeName) {
-					
+				if (this.themeOptions.showText) {
 					// @ts-ignore : LayoutNode type isn't completely mocked
-					if (node._parent._parent._UID !== this.rootNode._UID)
+					if (node._parent.nodeName === spanNodeName) {
+						
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						this.rolloverRefs[node._parent._parent._UID].textNodes.push(node);
-					
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					localDeltaTime = this.delaysMap[node._parent._parent._UID].offset;
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					localDuration = this.delaysMap[node._parent._parent._UID].duration;
-					if (GameState().animableState) {
-						// @ts-ignore : LayoutNode type isn't completely mocked
-						node.canvasShape.shape.alpha = 0
-						GameLoop().unshiftTween(
+						if (node._parent._parent._UID !== this.rootNode._UID)
 							// @ts-ignore : LayoutNode type isn't completely mocked
-							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 4, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
-						);
-					}
-					else
+							this.rolloverRefs[node._parent._parent._UID].textNodes.push(node);
+						
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						GameLoop().stage.addChild(node.canvasShape.shape);
-				}
-				// @ts-ignore : LayoutNode type isn't completely mocked
-				else if (node._parent.nodeName === leafNodeName) {
-					
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					this.rolloverRefs[node._parent._UID].textNodes.push(node);
-					
-					// @ts-ignore : LayoutNode type isn't completely mocked
-					localDeltaTime = this.delaysMap[node._parent._UID].offset;
-					if (GameState().animableState) {
+						localDeltaTime = this.delaysMap[node._parent._parent._UID].offset;
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						node.canvasShape.shape.alpha = 0
-						GameLoop().unshiftTween(
+						localDuration = this.delaysMap[node._parent._parent._UID].duration;
+						
+						if (GameState().animableState) {
+							GameLoop().unshiftTween(
+								// @ts-ignore : LayoutNode type isn't completely mocked
+								new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 4, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+							);
+						}
+						else 
 							// @ts-ignore : LayoutNode type isn't completely mocked
-							new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 3, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
-						);
+							GameLoop().stage.addChild(node.canvasShape.shape);
 					}
-					else
+					// @ts-ignore : LayoutNode type isn't completely mocked
+					else if (node._parent.nodeName === leafNodeName) {
+						
 						// @ts-ignore : LayoutNode type isn't completely mocked
-						GameLoop().stage.addChild(node.canvasShape.shape);
+						this.rolloverRefs[node._parent._UID].textNodes.push(node);
+						
+						// @ts-ignore : LayoutNode type isn't completely mocked
+						localDeltaTime = this.delaysMap[node._parent._UID].offset;
+						
+						if (GameState().animableState) {
+							GameLoop().unshiftTween(
+								// @ts-ignore : LayoutNode type isn't completely mocked
+								new DelayedPropFadeOneShotCallbackTween(GameLoop().stage, nodeCallbackName, localDeltaTime + standardFruitFadeDuration * 3, [node.canvasShape.shape], null, null, node.canvasShape.shape, alphaPropName, 1, standardFruitFadeDuration)
+							);
+						}
+						else
+							// @ts-ignore : LayoutNode type isn't completely mocked
+							GameLoop().stage.addChild(node.canvasShape.shape);
+					}
 				}
 			}
 		}, this);
@@ -591,7 +600,11 @@ PlantCreator.prototype.getBranches = function() {
 		currentDepth += 1;
 	 }
 	 
-	 console.log(deltaTime);
+	 if (GameState().animableState)
+		console.log('animation duration', Math.round(deltaTime).toString(), 'frames (till last branch ends)');
+	else
+		console.log('animation disabled');
+		
 	 GameLoop().unshiftTween(
 		 // @ts-ignore : we hacked the tween with a non-sprite target
 		 new DelayedOneShotCallbackTween(this, 'enableHoverEffect', deltaTime)

@@ -206,6 +206,35 @@ const manifest = {
 				
 				{name : '24H du Mindlogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
 			]
+		},
+		{
+			name : 'Your Theme',
+			assets : [
+				{name : 'Your Themeroot', srcs : 'plugins/LinkedTree/assets/empty_theme/root_theme_empty.png'},
+				{name : 'Your ThemebranchRoot', srcs : 'plugins/LinkedTree/assets/empty_theme/branch_root_theme_empty.png'},
+				{name : 'Your Themebranch01', srcs : 'plugins/LinkedTree/assets/empty_theme/branch_01_theme_empty.png'},
+				{name : 'Your Themebranch01Reverse', srcs : 'plugins/LinkedTree/assets/empty_theme/branch_01_theme_empty.png'},
+				{name : 'Your ThemebranchRootReverse', srcs : 'plugins/LinkedTree/assets/empty_theme/branch_root_theme_empty.png'},
+				{name : 'Your Themeleaf00', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf01', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf02', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf02Long', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf00Reverse', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf01Reverse', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf02Reverse', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				{name : 'Your Themeleaf02LongReverse', srcs : 'plugins/LinkedTree/assets/empty_theme/leaf_theme_empty_01.png'},
+				
+				{name : 'Your Themebranchlet00', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_24H_01.png'},
+				{name : 'Your Themebranchlet01', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_24H_01.png'},
+				{name : 'Your Themebranchlet02', srcs : 'plugins/LinkedTree/assets/branchlets/branchlet_theme_24H_01.png'},
+				
+				{name : 'Your Themefruit01', srcs : 'plugins/LinkedTree/assets/empty_theme/fruit_theme_empty_01.png'},
+				{name : 'Your Themefruit02', srcs : 'plugins/LinkedTree/assets/empty_theme/fruit_theme_empty_02.png'},
+
+				{name : 'Your ThemethemeBg', srcs : 'plugins/LinkedTree/assets/empty_theme/background_theme_empty.png'},
+				
+				{name : 'Your Themelogo', srcs : 'plugins/LinkedTree/assets/logo.png'}
+			]
 		}
 	]
 };
@@ -230,7 +259,9 @@ module.exports = new Promise(function(resolve, reject) {
 				// @ts-ignore
 				PIXI.Assets.loadBundle('MindTrip'),
 				// @ts-ignore
-				PIXI.Assets.loadBundle('24H du Mind')
+				PIXI.Assets.loadBundle('24H du Mind'),
+				// @ts-ignore
+				PIXI.Assets.loadBundle('Your Theme')
 			]).then(function(loadedAssets) {
 				resolve(loadedAssets);
 			});

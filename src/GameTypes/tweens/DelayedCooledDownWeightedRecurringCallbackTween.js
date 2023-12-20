@@ -89,7 +89,7 @@ DelayedCooledDownWeightedRecurringCallbackTween.prototype.nextStep = function(st
 			nextIterationFrameCount = this.interval * this.weights[i];
 			if (this.currentPartialStep >= nextIterationFrameCount) {
 				this.currentPartialStep = Math.round(this.currentPartialStep - nextIterationFrameCount);
-				console.log('dropped step');
+				console.log('animation step has been dropped');
 				missedSteps++;
 			}
 			else

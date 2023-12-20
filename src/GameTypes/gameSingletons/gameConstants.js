@@ -29,6 +29,7 @@ const curveTypes = {
 	doubleQuad : 'doubleQuad'
 }
 
+const themesCount = 8;
 /**
  * @constructor themeDescriptorsFactory
  * 
@@ -44,21 +45,24 @@ const curveTypes = {
  * @param {Array<Number>|Null} branchletStepIndicesforLeaves
  * @param {Number|Null} maxDurationForBranchlets
  * @param {String|Null} curveType
+ * @param {Boolean|Null} showText
  * @param {Boolean|Null} disableHoverEffect
+ * @return {Object.<String, String|Boolean>}
  */
-const ThemeDescriptorsFactory = function(
-	id,
-	showBranchFruits,
-	showLeafFruits,
-	showRootBox,
-	showNodeBox,
-	showLeafBox,
-	dropShadows,
-	blurNodeBoxes,
-	branchletStepIndicesforBranches,
-	branchletStepIndicesforLeaves,
-	maxDurationForBranchlets,
-	curveType,
+const ThemeDescriptorFromFactory = function(
+	id = themesCount,
+	showBranchFruits = true,
+	showLeafFruits = false,
+	showRootBox = false,
+	showNodeBox = false,
+	showLeafBox = true,
+	dropShadows = true,
+	blurNodeBoxes = false,
+	branchletStepIndicesforBranches = Array(),
+	branchletStepIndicesforLeaves = Array(),
+	maxDurationForBranchlets = 8,
+	curveType = 'singleQuad',
+	showText = true,
 	disableHoverEffect = false
 ) {
 	this.id = id;
@@ -73,14 +77,16 @@ const ThemeDescriptorsFactory = function(
 	this.branchletStepIndicesforLeaves = branchletStepIndicesforLeaves ?? [];
 	this.maxDurationForBranchlets = maxDurationForBranchlets ?? 8
 	this.curveType = curveType ?? 'singleQuad';
-	this.disableHoverEffect = disableHoverEffect;
+	this.showText = showText ?? true;
+	this.disableHoverEffect = disableHoverEffect ?? false;
 }
 
+
 /**
- * @type {{[key:String] : ThemeDescriptorsFactory}}
+ * @type {{[key:String] : ThemeDescriptorFromFactory}}
  */
 const themeDescriptors = {
-	'DeepMind' : new ThemeDescriptorsFactory(
+	'DeepMind' : new ThemeDescriptorFromFactory(
 		0,
 		null,
 		true,
@@ -94,7 +100,7 @@ const themeDescriptors = {
 		null,
 		null
 	),
-	'Midi' : new ThemeDescriptorsFactory(
+	'Midi' : new ThemeDescriptorFromFactory(
 		1,
 		true,
 		true,
@@ -107,9 +113,10 @@ const themeDescriptors = {
 		[1, 3, 6],
 		null,
 		null,
+		null,
 		true
 	),
-	'80s' : new ThemeDescriptorsFactory(
+	'80s' : new ThemeDescriptorFromFactory(
 		2,
 		null,
 		true,
@@ -123,7 +130,7 @@ const themeDescriptors = {
 		null,
 		'doubleQuad'
 	),
-	'Whitehouse' : new ThemeDescriptorsFactory(
+	'Whitehouse' : new ThemeDescriptorFromFactory(
 		3,
 		null,
 		true,
@@ -137,7 +144,7 @@ const themeDescriptors = {
 		null,
 		'singleQuad'
 	),
-	'SteamSoul' : new ThemeDescriptorsFactory(
+	'SteamSoul' : new ThemeDescriptorFromFactory(
 		4,
 		null,
 		true,
@@ -151,7 +158,7 @@ const themeDescriptors = {
 		null,
 		'doubleQuad'
 	),
-	'MindTrip' : new ThemeDescriptorsFactory(
+	'MindTrip' : new ThemeDescriptorFromFactory(
 		5,
 		null,
 		null,
@@ -165,7 +172,7 @@ const themeDescriptors = {
 		null,
 		'singleQuad'
 	),
-	'24H du Mind' : new ThemeDescriptorsFactory(
+	'24H du Mind' : new ThemeDescriptorFromFactory(
 		6,
 		null,
 		true,
@@ -174,10 +181,26 @@ const themeDescriptors = {
 		null,
 		false,
 		null,
-		[0],		// 9
+		null,		// 9
 		null,
 		null,
 		'doubleQuad'
+	),
+	'Your Theme' : new ThemeDescriptorFromFactory(
+		7,
+		null,
+		true,
+		null,
+		null,
+		false,
+		false,
+		null,
+		null,		// 9
+		null,
+		null,
+		'doubleQuad',
+		false,
+		true
 	)
 }
 
@@ -191,14 +214,20 @@ const objectTypes = {
 	infiniteTitle : 'infiniteTitle',
 }
 
+const localStorageCustomThemeDescriptorName = 'PimpMyMindMap.customThemeDescriptor';
+const localStorageCustomImgListName = 'PimpMyMindMap.customImgList';
+
 
 const gameConstants = {
 	eventNames,
 	defaultInterpolationStepCount,
 	branchletAnimationSteps,
 	curveTypes,
+	ThemeDescriptorFromFactory,
 	themeDescriptors,
-	objectTypes
+	objectTypes,
+	localStorageCustomThemeDescriptorName,
+	localStorageCustomImgListName
 }
 
 module.exports = gameConstants

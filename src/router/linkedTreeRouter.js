@@ -54,10 +54,12 @@ var classConstructor = function() {
 		 *  getMapData
 		 */
 		const dumbClickableInit = function() {
+			globalHandler.startLoadingSpinner();
+			
 			// @ts-ignore Framework's component
 			globalHandler.componentsHelper.rootViewComponent._children[2].view.getMasterNode().style.display = 'none';
-			globalHandler.startLoadingSpinner();
 			globalHandler.componentsHelper.handleNewMapData(globalHandler.mapData, globalHandler.alignment);
+			globalHandler.loadSavedThemeAndInitThemeEditor();
 			document.removeEventListener('mouseup', dumbClickableInit);
 		}
 		
@@ -71,6 +73,7 @@ var classConstructor = function() {
 			rootNodeSelector,
 			document.querySelector('#map_data').textContent
 		);
+		
 		(new FontFaceObserver('roboto')).load(null, 10000).then(function() {
 			AssetsLoader.then(function() {
 				document.addEventListener('mouseup', dumbClickableInit);

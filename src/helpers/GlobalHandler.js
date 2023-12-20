@@ -1,6 +1,7 @@
 /**
  * @typedef {{[key : String] : Number}|String} FrameworkEventData
  * @typedef {{[key : String] : FrameworkEventData}} FrameworkEvent
+ * @typedef {Object} PIXI.Texture
  */
 
 const GlHelper = require('src/helpers/GlHelper');
@@ -9,7 +10,9 @@ const KeyboardListener = require('src/events/GameKeyboardListener');
 const KeyboardEvents = require('src/events/JSKeyboardMap');
 const ApiHelper = require('src/helpers/ApiHelper');
 
-const {themeDescriptors} = require('src/GameTypes/gameSingletons/gameConstants');
+const AssetsLoader = require('src/GameTypes/gameSingletons/AssetsLoader');
+
+const {themeDescriptors, localStorageCustomThemeDescriptorName, localStorageCustomImgListName} = require('src/GameTypes/gameSingletons/gameConstants');
 const {Point} = require('src/GameTypes/gameSingletons/CoreTypes');
 const GameState = require('src/GameTypes/gameSingletons/GameState');
 const GameLoop = require('src/GameTypes/gameSingletons/GameLoop');
@@ -62,11 +65,15 @@ const GlobalHandler = function(rootNodeSelector, initialMapData) {
 	// @ts-ignore inherited method
 	this.componentsHelper.addEventListener('newMapData', this.handleNewMapData.bind(this));
 	// @ts-ignore inherited method
-	this.componentsHelper.addEventListener('newLayoutReady', this.handleNewLayout.bind(this));
+	this.componentsHelper.addEventListener('newMapReady', this.handleMapReady.bind(this));
 	// @ts-ignore inherited method
 	this.componentsHelper.addEventListener('mapChanged', this.handleMapChanged.bind(this));
 	// @ts-ignore inherited method
 	this.componentsHelper.addEventListener('themeChanged', this.handleThemeChanged.bind(this));
+	// @ts-ignore inherited method
+	this.componentsHelper.addEventListener('switchToYourTheme', this.switchToYourTheme.bind(this));
+	// @ts-ignore inherited method
+	this.componentsHelper.addEventListener('themeEditorNeedsRefresh', this.handleThemeEditorRefresh.bind(this));
 	
 	this.hookEditMapButton();
 	
@@ -85,6 +92,91 @@ GlobalHandler.prototype.getNoAnimationParam = function() {
 		return false;
 	}
 	return true;
+}
+
+/**
+ * @method handleThemeChanged
+ */
+GlobalHandler.prototype.loadSavedThemeAndInitThemeEditor = function() {
+	this.prepareYourTheme();
+	this.componentsHelper.initThemeEditorComponent();
+}
+
+/**
+ * @method handleThemeChanged
+ */
+GlobalHandler.prototype.prepareYourTheme = function() {
+	const self = this;
+	let themeDescriptor,
+		/** @type {String} */
+		imgList;
+	let promiseArray = Array();
+	
+	if ((themeDescriptor = localStorage.getItem(localStorageCustomThemeDescriptorName))) {
+		const savedOptions = JSON.parse(themeDescriptor);
+		for (let themeOption in themeDescriptors[this.userThemeName]) {
+			if (savedOptions[themeOption])
+				// @ts-ignore : inference doesn't work when indexing an object with its own props... weird...
+				themeDescriptors[this.userThemeName][themeOption] = savedOptions[themeOption];
+		}
+	}
+	if ((imgList = localStorage.getItem(localStorageCustomImgListName))) {
+		/** @type {Array<Object>} */
+		let loadedAssets = null;
+		AssetsLoader.then(function(loadedBundles) {
+			loadedAssets = loadedBundles;
+			/** @type {PIXI.Texture} */
+			let newTexture;
+			const parsedImgList = JSON.parse(imgList);
+			for (let assetName in loadedAssets[themeDescriptors[self.userThemeName].id]) {
+				if (!parsedImgList[assetName])
+					continue;
+					
+				// @ts-ignore loadedAssets ins't typed
+				newTexture = PIXI.Texture.from(parsedImgList[assetName]);
+				// PIXI takes a while to reference the actual ressource on the Texture object
+				// (it waits for the browser to have interpreted the data-url)
+				// => let's enclose that phenomenon in a global promise for locally stored images
+				promiseArray.push(new Promise(function(resolve, reject) {
+					// @ts-ignore PIXI
+					newTexture.baseTexture.on('loaded', () => resolve())
+				}))
+				// @ts-ignore loadedAssets ins't typed
+				loadedAssets[themeDescriptors[self.userThemeName].id][assetName] = newTexture;
+				
+				// Hacks to handle incomplete theme while we're experimenting
+				if (assetName === self.userThemeName + 'leaf00') {
+					// @ts-ignore loadedAssets ins't typed
+					loadedAssets[themeDescriptors[self.userThemeName].id][assetName + 'Reverse'] = newTexture;
+					// @ts-ignore loadedAssets isn't typed && PIXI
+					loadedAssets[themeDescriptors[self.userThemeName].id][self.userThemeName + 'leaf01'] = newTexture;
+					// @ts-ignore loadedAssets isn't typed && PIXI
+					loadedAssets[themeDescriptors[self.userThemeName].id][self.userThemeName + 'leaf01Reverse'] = newTexture;
+					// @ts-ignore loadedAssets isn't typed && PIXI
+					loadedAssets[themeDescriptors[self.userThemeName].id][self.userThemeName + 'leaf02'] = newTexture;
+					// @ts-ignore loadedAssets isn't typed && PIXI
+					loadedAssets[themeDescriptors[self.userThemeName].id][self.userThemeName + 'leaf02Reverse'] = newTexture;
+					// @ts-ignore loadedAssets isn't typed && PIXI
+					loadedAssets[themeDescriptors[self.userThemeName].id][self.userThemeName + 'leaf02Long'] = newTexture;
+					// @ts-ignore loadedAssets isn't typed && PIXI
+					loadedAssets[themeDescriptors[self.userThemeName].id][self.userThemeName + 'leaf02LongReverse'] = newTexture;
+				}
+				else if (self.hasReversedVersion.indexOf(assetName) !== -1) {
+					// @ts-ignore loadedAssets ins't typed
+					loadedAssets[themeDescriptors[self.userThemeName].id][assetName + 'Reverse'] = newTexture;
+				}
+			};
+		});
+	}
+	this.componentsHelper.localStorageLoadedPromise = Promise.all(promiseArray);
+}
+
+/**
+ * @method switchToYourTheme
+ */
+GlobalHandler.prototype.switchToYourTheme = function() {
+	GameState().animableState = false;
+	GameState().setCurrentTheme(this.userThemeName);
 }
 
 GlobalHandler.prototype.appendGameView = function() {
@@ -160,6 +252,8 @@ GlobalHandler.prototype.hookKeyboard = function() {
  */
 GlobalHandler.prototype.hookEditMapButton = function() {
 	const self = this;
+	
+	// Menu Option : "Edit a Map"
 	const editMapForm = this.componentsHelper.editMapModalComponent._children[0];
 	this.componentsHelper.menuBar._children[1]._children[2].onclicked_ok = function() {
 		editMapForm.streams.content.value = new naiveObjectToIndentedTextListConverter(self.mapData).result;
@@ -228,15 +322,29 @@ GlobalHandler.prototype.handleThemeChanged = function(e) {
 	const self = this;
 	GameLoop().stop();
 	self.startLoadingSpinner();
-	// Time to let the browser show the spinner before we hit the DOM hard
+	// Time to let the browser show the spinner before we hit the DOM hard (is it still needed ?)
 	setTimeout(function() {
 		self.glHelper.abortAutoLoopEnd();
 		
 		// @ts-ignore inherited property (FrameworkEvent is just mocked)
 		GameState().currentTheme = e.data;
-		self.componentsHelper.onResetMapComponent(self.mapData, self.alignment);
+		self.componentsHelper.handleNewTheme();
 		self.componentsHelper.resetZoom();
-	}, 1024);
+	}, 32);
+}
+
+/**
+ * @method handleThemeEditorRefresh
+ * @param {FrameworkEvent} e
+ */
+GlobalHandler.prototype.handleThemeEditorRefresh = function(e) {
+	GameLoop().stop();
+	this.startLoadingSpinner();
+	
+	// Start a new rendering on a non-animable theme (plants only, we keep the same layout)
+	GameLoop().clearStage();
+	GameLoop().clearTweens();
+	this.componentsHelper.handleNewTheme();
 }
 
 /**
@@ -252,10 +360,10 @@ GlobalHandler.prototype.handleNewMapData = function(e) {
 }
 
 /**
- * @method handleNewLayout
+ * @method handleMapReady
  * @param {FrameworkEvent} e
  */
-GlobalHandler.prototype.handleNewLayout = function(e) {
+GlobalHandler.prototype.handleMapReady = function(e) {
 	this.glHelper.prepareAutoLoopEnd();
 	if (GameState().animableState)
 		this.glHelper.delayGameLoopStart(this);
@@ -269,6 +377,13 @@ GlobalHandler.prototype.handleNewLayout = function(e) {
  * @property @static {String} defaultTheme
  */
 GlobalHandler.prototype.defaultTheme = '24H du Mind'; //''; 	// midi 
+
+/**
+ * @property @static userThemeName
+ */
+GlobalHandler.prototype.userThemeName = ComponentsHelper.prototype.userThemeName;
+
+GlobalHandler.prototype.hasReversedVersion = ComponentsHelper.prototype.hasReversedVersion;
 
 
 

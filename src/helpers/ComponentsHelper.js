@@ -1,15 +1,15 @@
 /**
- * @typedef {{[key : String] : Number}} LayoutNode
+ * @typedef {{[key : String] : Number}} LayoutNode		// mock
  */
 
 /**
- * @typedef {{[key : String] : Number}|String} FrameworkEventData
- * @typedef {{[key : String] : FrameworkEventData}} FrameworkEvent
+ * @typedef {{[key : String] : Number}|String} FrameworkEventData		// mock
+ * @typedef {{[key : String] : FrameworkEventData}} FrameworkEvent		// mock
  */
 
 
 const App = require('src/core/AppIgnition');
-const {EventEmitter} = require('src/core/CoreTypes');
+const {EventEmitter, SavableStore} = require('src/core/CoreTypes');
 const TypeManager = require('src/core/TypeManager');
 const StylesheetsCollector = require('src/_LayoutEngine/StylesheetsCollector');
 const ComputedStyleSolver = require('src/_LayoutEngine/ComputedStyleSolver');
@@ -21,7 +21,7 @@ let loadedAssets = null;
 AssetsLoader.then(function(loadedBundles) {
 	loadedAssets = loadedBundles;
 });
-const {themeDescriptors} = require('src/GameTypes/gameSingletons/gameConstants');
+const {themeDescriptors, ThemeDescriptorFromFactory, localStorageCustomImgListName} = require('src/GameTypes/gameSingletons/gameConstants');
 
 const {windowSize} = require('src/GameTypes/grids/gridManager');
 const CoreTypes = require('src/GameTypes/gameSingletons/CoreTypes');
@@ -54,6 +54,9 @@ const ComponentsHelper = function() {
 	EventEmitter.call(this);
 	
 	this.firstInit = true;
+	this.editingMode = false;
+	/** @type {Promise<any[]>} */
+	this.localStorageLoadedPromise;
 	this.rootBoundingRect = document.body.getBoundingClientRect();
 	this.menuBarReadyPromise;
 	this.menuYOffset = 0;
@@ -91,15 +94,20 @@ const ComponentsHelper = function() {
 	this.getThemeSelectorComponent();
 	this.hookCreateMapForm();
 	this.hookEditMapForm();
+	this.hookEditThemeForm();
 	
 	// @ts-ignore inherited method
 	this.createEvent('newMapData');
 	// @ts-ignore inherited method
-	this.createEvent('newLayoutReady');
+	this.createEvent('newMapReady');
 	// @ts-ignore inherited method
 	this.createEvent('mapChanged');
 	// @ts-ignore inherited method
 	this.createEvent('themeChanged');
+	// @ts-ignore inherited method
+	this.createEvent('switchToYourTheme');
+	// @ts-ignore inherited method
+	this.createEvent('themeEditorNeedsRefresh');
 }
 ComponentsHelper.prototype = Object.create(EventEmitter.prototype);
 
@@ -182,13 +190,15 @@ ComponentsHelper.prototype.createRootComponent = function() {
 		//'noAppend'
 	);
 	// @ts-ignore Component isn't typed
+	this.menuBar = this.rootViewComponent._children[0];
+	// @ts-ignore Component isn't typed
 	this.pixiRendererComponent = this.rootViewComponent._children[1];
 	// @ts-ignore Component isn't typed
 	this.createMapModalComponent = this.rootViewComponent._children[3];
 	// @ts-ignore Component isn't typed
 	this.editMapModalComponent = this.rootViewComponent._children[4];
 	// @ts-ignore Component isn't typed
-	this.menuBar = this.rootViewComponent._children[0];
+	this.themeEditorComponent = this.rootViewComponent._children[5];
 }
 
 /**
@@ -224,7 +234,7 @@ ComponentsHelper.prototype.createMapComponent = function(mapData, alignment) {
  */
 ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 	// @ts-ignore Component isn't typed
-	this.rootViewComponent.removeChildAt(5);
+	this.rootViewComponent.removeChildAt(6);
 	// @ts-ignore Component isn't typed
 	this.linkedTreeInstance = new App.componentTypes.LinkedTreeComponent(
 		this.linkedTreeComponentDef,
@@ -239,7 +249,203 @@ ComponentsHelper.prototype.setMapComponent = function(mapData, alignment) {
 //	new App.DelayedDecoration();
 }
 
+/**
+ * @method initThemeEditorComponent
+ */
+ComponentsHelper.prototype.initThemeEditorComponent = function() {
+	// Remove any previously added ImagPlaceholder
+//	this.themeEditorComponent._children[0]._children[0].removeAllChildren();
+//	this.themeEditorComponent._children[1]._children[0].removeAllChildren();
 
+	// @ts-ignore too lazy to type callbacks
+	this.themeEditorComponent._children[3]._children[1].view.getMasterNode().addEventListener('mouseup', function(e) {
+		// Move canvas form background to background
+		document.body.prepend(this.gameCanvas);
+		this.themeEditorComponent.streams.hidden.value = true;
+		this.themeEditorComponent.view.getMasterNode().style.display = 'none';
+		
+		// Reset window size
+		windowSize.x.value = window.innerWidth;
+		windowSize.y.value = window.innerHeight;
+		
+		GameState().animableState = true;
+		// @ts-ignore Framework's specialty
+		this.trigger('themeEditorNeedsRefresh');
+		
+	}.bind(this));
+	
+	const themeIdx = themeDescriptors[this.userThemeName].id;
+	// @ts-ignore too lazy to type callbacks (values from an interface are almost impossible to type)
+	const savableStoreCallback = function(values) {
+		localStorage.setItem(localStorageCustomImgListName, values);
+	}
+	const savableStore = new SavableStore(savableStoreCallback);
+	
+	// Add new ImgPlaceholders	
+	Object.keys(loadedAssets[themeIdx]).forEach(function(assetName) {
+		if (this.visibleFields.indexOf(assetName) === -1)
+			return;
+		this.addImgPlaceholderInFirstColumn(assetName);
+		this.addImgPlaceholderInSecondColumn(assetName, savableStore);
+	}, this);
+	
+	// @ts-ignore Framework specialties
+	new App.DelayedDecoration();
+	// After rendering cause we need the locallySavableInterface to have defined the valueNames (extracted from the DOM)
+	this.populateCheckboxesFromThemeDescriptor();
+	this.prePopulateStoreForSecondColumn();
+}
+
+/**
+ * @method addImgPlaceholderInFirstColumn
+ * @param {String} assetName
+ */
+ComponentsHelper.prototype.addImgPlaceholderInFirstColumn = function(assetName) {
+	// @ts-ignore loadedAssets isn't typed
+	const textureResource = loadedAssets[themeDescriptors[this.userThemeName].id][assetName].baseTexture.resource;
+	// @ts-ignore Framework specialties
+	new App.componentTypes.ImgPlaceholder(
+		// @ts-ignore Framework specialties
+		TypeManager.createDef({
+			// @ts-ignore Framework specialties
+			host : TypeManager.createDef({
+				nodeName : 'image-placeholder',
+				props : [
+					// There's something asynchronous in Pixi's handling of textures
+					{imgURL : textureResource.src || textureResource.url}
+				]
+			})
+		}),
+		this.themeEditorComponent._children[0]._children[0].view,
+		this.themeEditorComponent._children[0]._children[0]
+	);
+}
+
+/**
+ * @method addImgPlaceholderInSecondColumn
+ * @param {String} assetName
+ * @param {SavableStore} store
+ */
+ComponentsHelper.prototype.addImgPlaceholderInSecondColumn = function(assetName, store) {
+	// @ts-ignore Framework specialties
+	const imgPlaceholderDef = TypeManager.mockDef();
+	imgPlaceholderDef.getHostDef().section = 0;
+	imgPlaceholderDef.getHostDef().attributes.push(new TypeManager.AttributeModel({title : assetName}));
+	// We're ultra-exceptionnaly making use of the options prop (not typed, so not meant to by widely used)
+	imgPlaceholderDef.options = {savableStore : store};
+	// @ts-ignore Framework specialties
+	const dropZone = new App.componentTypes.DroppableImgPlaceholder(
+		imgPlaceholderDef,
+		this.themeEditorComponent._children[1]._children[0].view,
+		this.themeEditorComponent._children[1]._children[0]
+	);
+	dropZone.addEventListener('update', this.replacePixiTextureInAssets.bind(this, assetName, dropZone));
+}
+
+/**
+ * @method prePopulateStoreForSecondColumn
+ */
+ComponentsHelper.prototype.prePopulateStoreForSecondColumn = function() {
+	this.localStorageLoadedPromise.then(function() {
+		let assetName = '', textureResource, assetURL = '';
+		// @ts-ignore too lazy to type callbacks
+		this.themeEditorComponent._children[1]._children[0]._children.forEach(function(dropZone, key) {
+			assetName = this.visibleFields[key];
+			// @ts-ignore loadedAssets isn't typed
+			textureResource = loadedAssets[themeDescriptors[this.userThemeName].id][assetName].baseTexture.resource;
+			// There's something asynchronous in Pixi's handling of textures
+			assetURL = textureResource.src || textureResource.url;
+			dropZone.savableStore.update(assetName, assetURL);
+			
+			if (assetURL.slice(0, 4) === 'data') {
+				dropZone.streams.imgURL.value = assetURL;
+			}
+		}, this);
+	}.bind(this));
+}
+
+
+/**
+ * @method populateCheckboxesFromThemeDescriptor
+ */
+ComponentsHelper.prototype.populateCheckboxesFromThemeDescriptor = function() {
+	const self = this;
+	const themeDescriptor = themeDescriptors[this.userThemeName];
+	// @ts-ignore Framework specialties
+	this.themeEditorComponent._children[3]._children[0]._children.forEach(function(child) {
+		/** type {keyof ThemeDescriptorFromFactory} */
+		const propertyName = child.view.getMasterNode().title;
+
+		// @ts-ignore Framework specialties
+		if (child.streams.checked)
+			// @ts-ignore Framework specialties
+			child.streams.checked.value = themeDescriptor[propertyName];	// checkboxes
+		else
+			// @ts-ignore Framework specialties
+			child.setValue(themeDescriptor[propertyName]);					// text-inputs
+		
+		// @ts-ignore can't get to make the "keyof" type work
+		child.savableStore.update(propertyName, themeDescriptor[propertyName]);
+		// @ts-ignore Framework specialties
+		child.addEventListener('update', function(e) {
+			// @ts-ignore can't get to make the "keyof" type work
+			themeDescriptors[GameState().currentTheme][propertyName] = child.getValue();
+			// @ts-ignore Framework specialties
+			self.trigger('themeEditorNeedsRefresh');
+		})
+	});
+}
+
+/**
+ * @method createPixiTexture
+ * @param {String} assetName
+ * @param {Object} component
+ * @param {FrameworkEvent} e
+ */
+ComponentsHelper.prototype.replacePixiTextureInAssets = function(assetName, component, e) {
+	const self = this;
+	// @ts-ignore FrameworkEvent.data has a "any" type (here it's a DOM File)
+	createImageBitmap(e.data).then(function(imgBmp) {
+		var reader = new FileReader();
+		reader.onloadend = function() {
+			// @ts-ignore Framework's specialty
+			component.streams.imgURL.value = reader.result;
+		}
+		// @ts-ignore FrameworkEvent.data has a "any" type (here it's a DOM File)
+		reader.readAsDataURL(e.data);
+		
+		
+		// @ts-ignore PIXI isn't completely mocked
+		const newTexture = PIXI.Texture.from(imgBmp);
+		// @ts-ignore loadedAssets isn't typed && PIXI
+		loadedAssets[themeDescriptors[GameState().currentTheme].id][assetName] = newTexture;
+		
+		// Hacks to handle incomplete theme while we're experimenting
+		if (assetName === self.userThemeName + 'leaf00') {
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][assetName + 'Reverse'] = newTexture;
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][self.userThemeName + 'leaf01'] = newTexture;
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][self.userThemeName + 'leaf01Reverse'] = newTexture;
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][self.userThemeName + 'leaf02'] = newTexture;
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][self.userThemeName + 'leaf02Reverse'] = newTexture;
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][self.userThemeName + 'leaf02Long'] = newTexture;
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][self.userThemeName + 'leaf02LongReverse'] = newTexture;
+		}
+		else if (self.hasReversedVersion.indexOf(assetName) !== -1) {
+			// @ts-ignore loadedAssets isn't typed && PIXI
+			loadedAssets[themeDescriptors[GameState().currentTheme].id][assetName + 'Reverse'] = newTexture;
+		}
+			
+		// @ts-ignore Framework's specialty
+		self.trigger('themeEditorNeedsRefresh');
+	});
+}
 
 ComponentsHelper.prototype.getMapSelectorComponent = function() {
 	// @ts-ignore Component isn't typed
@@ -342,12 +548,13 @@ ComponentsHelper.prototype.hookLoadThemeEventOnThemeSelector = function () {
 ComponentsHelper.prototype.hookCreateMapForm = function () {
 	const self = this;
 	
-	this.menuBar._children[1]._children[1].onclicked_ok = function() {self.createMapModalComponent.streams.hidden.value = false;}
+	// Menu Option : "Create a Map"
+	this.menuBar._children[1]._children[1].onclicked_ok = function() {self.createMapModalComponent.streams.hidden.value = null;}
 	
 	// @ts-ignore Component isn't typed
 	const createMapForm = this.createMapModalComponent._children[0];
 	this.createMapModalComponent.streams.hidden.value = true;
-	// Menu Option : "Save a Definition"
+	
 	createMapForm.onsubmit = function() {
 		if (!createMapForm.data.get('mapcontent'))  {
 			if (!createMapForm._children[1]._children[0].streams.errors.value)
@@ -372,10 +579,13 @@ ComponentsHelper.prototype.hookCreateMapForm = function () {
 ComponentsHelper.prototype.hookEditMapForm = function () {
 	const self = this;
 	
+	// Menu Option : "Create a Map"
+	this.menuBar._children[1]._children[2].onclicked_ok = function() {self.editMapModalComponent.streams.hidden.value = null;}
+	
 	// @ts-ignore Component isn't typed
 	const editMapForm = this.editMapModalComponent._children[0];
 	this.editMapModalComponent.streams.hidden.value = true;
-	// Menu Option : "Save a Definition"
+	
 	editMapForm.onsubmit = function() {
 		if (!editMapForm.data.get('mapcontent'))  {
 			if (!editMapForm._children[1]._children[0].streams.errors.value)
@@ -392,6 +602,34 @@ ComponentsHelper.prototype.hookEditMapForm = function () {
 			editMapForm._children[1]._children[0].setTooltipContentAndShow('The text seems badly formatted.');
 		}
 	}
+}
+
+/**
+ * @method hookEditThemeForm
+ */
+ComponentsHelper.prototype.hookEditThemeForm = function () {
+	const self = this;
+	
+	// Menu Option : "Create a Map"
+	this.menuBar._children[1]._children[3].onclicked_ok = function() {
+		self.editingMode = true;
+		self.themeEditorComponent.streams.hidden.value = null;
+		self.themeEditorComponent.view.getMasterNode().style.display = 'flex';
+		// Move canvas form background to foreground
+		self.themeEditorComponent._children[2]._children[0].view.getWrappingNode().appendChild(self.gameCanvas);
+		
+		// Reset window size
+		windowSize.x.value = 1116;
+		windowSize.y.value = 820;
+		
+		// @ts-ignore Framework's specialty
+		self.trigger('switchToYourTheme');
+		// @ts-ignore Framework's specialty
+		self.trigger('themeEditorNeedsRefresh');
+	}
+	
+	this.themeEditorComponent.streams.hidden.value = true;
+	this.themeEditorComponent.view.getMasterNode().style.display = 'none';
 }
 
 ComponentsHelper.prototype.createBgSprite = function() {
@@ -431,7 +669,20 @@ ComponentsHelper.prototype.handleNewMapData = function(mapData, alignment) {
 }
 
 /**
- * @method handleNewMapData
+ * @method handleNewTheme
+ */
+ComponentsHelper.prototype.handleNewTheme = function() {
+	this.resetPlantsRenderer();
+	this.updatePlantsRenderer();
+	this.createBgSprite();
+	this.createPlants();
+	this.centerCanvas(false);
+	// @ts-ignore inherited method
+	this.trigger('newMapReady');
+}
+
+/**
+ * @method onResetMapComponent
  * @param {Object} mapData	// JSON as Object
  * @param {String} alignment
  */
@@ -486,7 +737,7 @@ ComponentsHelper.prototype.executeLayout = function() {
 		nodesCache[UID].updateCanvasShapeOffsets();
 	}
 	// @ts-ignore inherited method
-	this.trigger('newLayoutReady');
+	this.trigger('newMapReady');
 }
 
 ComponentsHelper.prototype.representLayoutTreeAsBreadthFirst = function() {
@@ -543,11 +794,17 @@ ComponentsHelper.prototype.resetPlantsRenderer = function() {
 	GameLoop().clearStage();
 }
 
-ComponentsHelper.prototype.centerCanvas = function() {
+/**
+ * @method centerCanvas
+ * @param {Boolean} fromRealWindowSize
+ */
+ComponentsHelper.prototype.centerCanvas = function(fromRealWindowSize = true) {
 	var self = this;
 	this.menuBarReadyPromise.then(function() {
-		windowSize.x.value = window.innerWidth;
-		windowSize.y.value = window.innerHeight;
+		if (fromRealWindowSize) {
+			windowSize.x.value = window.innerWidth;
+			windowSize.y.value = window.innerHeight;
+		}
 		let windowY = windowSize.y.value - self.menuYOffset,
 			zoomFactor = 1, centeringOffsetX = 0, centeringOffsetY = 0;
 		const canvasDimensions = {
@@ -586,6 +843,9 @@ ComponentsHelper.prototype.centerCanvas = function() {
  * @param {MouseEvent} e
  */
 ComponentsHelper.prototype.handleZoomOnCanvas = function(e) {
+	if (this.editingMode)
+		return;
+		
 	if (this.zoomState !== 0) {
 		if (e.altKey)
 			this.zoomOut();
@@ -687,6 +947,44 @@ ComponentsHelper.prototype.handleDragEnd = function(dragEvent) {
 ComponentsHelper.prototype.resetZoom = function() {
 	this.zoomOut();
 }
+
+/**
+ * @method showEditorComponent
+ */
+ComponentsHelper.prototype.showEditorComponent = function() {
+	this.zoomOut();
+}
+
+/**
+ * @property @static userThemeName
+ */
+ComponentsHelper.prototype.userThemeName = 'Your Theme';
+
+
+/**
+ * @property @static userThemeName
+ */
+ComponentsHelper.prototype.visibleFields = [
+	ComponentsHelper.prototype.userThemeName + 'root',
+	ComponentsHelper.prototype.userThemeName + 'branchRoot',
+	ComponentsHelper.prototype.userThemeName + 'branch01',
+	ComponentsHelper.prototype.userThemeName + 'leaf00',
+	ComponentsHelper.prototype.userThemeName + 'fruit01',
+	ComponentsHelper.prototype.userThemeName + 'fruit02',
+	ComponentsHelper.prototype.userThemeName + 'themeBg',
+];
+
+/**
+ * @property @static hasReversedVersion
+ */
+ComponentsHelper.prototype.hasReversedVersion = [
+	ComponentsHelper.prototype.userThemeName + 'branchRoot',
+	ComponentsHelper.prototype.userThemeName + 'branch01',
+	ComponentsHelper.prototype.userThemeName + 'leaf00',
+	ComponentsHelper.prototype.userThemeName + 'leaf01	',
+	ComponentsHelper.prototype.userThemeName + 'leaf02',,
+	ComponentsHelper.prototype.userThemeName + 'leaf02Long'
+]
 
 
 

@@ -13,7 +13,8 @@ var CreateStyle = require('src/UI/generics/GenericStyleConstructor');
 
 const createModalBoxDef = require('src/UI/packages/boxes/BigModalBox/packageComponentDefs/VeryBigModalBoxHostDef');
 const createLoadMapBoxFormComponentOverrideDef = require('src/clientRoutes/loadMapFormComponentOverrideDef');
-const editLoadMapBoxFormComponentOverrideDef = require('src/clientRoutes/editMapFormComponentOverrideDef');
+const createEditMapBoxFormComponentOverrideDef = require('src/clientRoutes/editMapFormComponentOverrideDef');
+const createThemeEditorDef = require('src/clientRoutes/themeEditorDef');
 const createMenuDef = require('src/clientRoutes/menuDef');
 
 
@@ -66,7 +67,7 @@ var rootViewInitializer = function(options) {
 		);
 		
 		var editMapForm = new App.componentTypes.FormComponent(
-			editLoadMapBoxFormComponentOverrideDef(),
+			createEditMapBoxFormComponentOverrideDef(),
 			editMapFormBox.view,
 			editMapFormBox
 		);
@@ -223,7 +224,7 @@ var rootViewInitializer = function(options) {
 						nodeName : 'li',
 						props : [
 							{text : `
-							in-house stylesheets & layout-engine: Formant "matches" and "cascades" by itself
+							in-house stylesheets & layout: Formant "matches" and "cascades" by itself
 							`}
 						]
 					})
@@ -271,6 +272,12 @@ var rootViewInitializer = function(options) {
 			modalBox.view,
 			modalBox
 		);
+		
+		new App.componentTypes.BigModalBox(
+			createThemeEditorDef(),
+			parentView,
+			parent
+		)
 		
 	}
 		
