@@ -106,18 +106,7 @@ BranchSprite.prototype.getNextStepForPath = function(duration = 1, droppedFrameC
  */
 BranchSprite.prototype.getPreBuiltPath = function() {
 	
-	
-	if (this.options.curveType === curveTypes.singleQuad) {
-		const spline = new Bezier(this.refPositions);
-		const lut = spline.getLUT(this.stepCount);
-		
-		for (let i = 0, l = this.stepCount; i <= l; i++) {
-			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
-			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
-			this.path.push(new PIXI.Point(lut[i].x, lut[i].y));
-		}
-	}
-	else if (this.options.curveType === curveTypes.doubleQuad) {
+	if (this.options.curveType === curveTypes.doubleQuad) {
 		const stepCount = this.stepCount;
 		const spline1 = new Bezier(this.refPositions.slice(0, 4));
 		const lut1 = spline1.getLUT(stepCount);
@@ -135,6 +124,16 @@ BranchSprite.prototype.getPreBuiltPath = function() {
 			this.path.push(new PIXI.Point(lut2[i].x, lut2[i].y));
 		}
 	}
+	else {
+		const spline = new Bezier(this.refPositions);
+		const lut = spline.getLUT(this.stepCount);
+		
+		for (let i = 0, l = this.stepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(lut[i].x, lut[i].y));
+		}
+	}
 }
 
 /**
@@ -142,17 +141,7 @@ BranchSprite.prototype.getPreBuiltPath = function() {
  * @return void
  */
 BranchSprite.prototype.getInitialStatePath = function() {
-	if (this.options.curveType === curveTypes.singleQuad) {	
-		const spline = new Bezier(this.refPositions);
-		const lut = spline.getLUT(this.stepCount);
-		
-		for (let i = 0, l = this.stepCount; i <= l; i++) {
-			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
-			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
-			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
-		}
-	}
-	else if (this.options.curveType === curveTypes.doubleQuad) {
+	if (this.options.curveType === curveTypes.doubleQuad) {
 		const stepCount = this.stepCount;
 		const spline1 = new Bezier(this.refPositions.slice(0, 4));
 		const lut1 = spline1.getLUT(stepCount);
@@ -166,6 +155,16 @@ BranchSprite.prototype.getInitialStatePath = function() {
 		const lut2 = spline2.getLUT(stepCount);
 		for (let i = 1, l = stepCount; i <= l; i++) {
 			this.positions.push(new CoreTypes.Point(lut2[i].x, lut2[i].y));
+			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
+			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
+		}
+	}
+	else {	
+		const spline = new Bezier(this.refPositions);
+		const lut = spline.getLUT(this.stepCount);
+		
+		for (let i = 0, l = this.stepCount; i <= l; i++) {
+			this.positions.push(new CoreTypes.Point(lut[i].x, lut[i].y));
 			// @ts-ignore "cannot use namespace" "as a value" (Most TypeScript types (excluding a few things like enums) do not translate to runtime as they are used for compile time type checking)
 			this.path.push(new PIXI.Point(this.refPositions[0].x, this.refPositions[0].y));
 		}
@@ -239,26 +238,8 @@ BranchSprite.prototype.getRefPositions = function() {
 			? (verticalOffset / Math.abs(verticalOffset)) * Math.abs(horizontalOffset)
 			: verticalOffset;
 	
-	if (this.options.curveType === curveTypes.singleQuad)
-		return [
-			new CoreTypes.Simple3DPoint(
-				this.positionStart.x.value,
-				this.positionStart.y.value
-			),
-			new CoreTypes.Simple3DPoint(
-				this.positionStart.x.value + horizontalOffset,
-				this.positionStart.y.value
-			),
-			new CoreTypes.Simple3DPoint(
-				this.positionEnd.x.value - horizontalOffset,
-				this.positionEnd.y.value
-			),
-			new CoreTypes.Simple3DPoint(
-				this.positionEnd.x.value,
-				this.positionEnd.y.value
-			)
-		];
-	else
+	
+	if (this.options.curveType === curveTypes.doubleQuad)
 		return [
 			new CoreTypes.Simple3DPoint(
 				this.positionStart.x.value,
@@ -282,6 +263,25 @@ BranchSprite.prototype.getRefPositions = function() {
 			),
 			new CoreTypes.Simple3DPoint(
 				this.positionEnd.x.value - horizontalOffset - quarterOfMidHorizontalOffset,
+				this.positionEnd.y.value
+			),
+			new CoreTypes.Simple3DPoint(
+				this.positionEnd.x.value,
+				this.positionEnd.y.value
+			)
+		];
+	else
+		return [
+			new CoreTypes.Simple3DPoint(
+				this.positionStart.x.value,
+				this.positionStart.y.value
+			),
+			new CoreTypes.Simple3DPoint(
+				this.positionStart.x.value + horizontalOffset,
+				this.positionStart.y.value
+			),
+			new CoreTypes.Simple3DPoint(
+				this.positionEnd.x.value - horizontalOffset,
 				this.positionEnd.y.value
 			),
 			new CoreTypes.Simple3DPoint(
@@ -413,16 +413,7 @@ BranchSprite.prototype.updateGrownBranchCoordinates = function(positionStart, po
  * @return void
  */
 BranchSprite.prototype.updatePath = function() {
-	if (this.options.curveType === curveTypes.singleQuad) {
-		const spline = new Bezier(this.refPositions);
-		const lut = spline.getLUT(this.stepCount);
-		
-		for (let i = 0, l = this.stepCount; i <= l; i++) {
-			this.path[i].x = lut[i].x
-			this.path[i].y = lut[i].y
-		}
-	}
-	else if (this.options.curveType === curveTypes.doubleQuad) {
+	if (this.options.curveType === curveTypes.doubleQuad) {
 		const stepCount = this.stepCount;
 		const spline1 = new Bezier(this.refPositions.slice(0, 4));
 		const lut1 = spline1.getLUT(stepCount);
@@ -440,6 +431,15 @@ BranchSprite.prototype.updatePath = function() {
 			this.path[cursor].y = lut2[i].y;
 		}
 		
+	}
+	else {
+		const spline = new Bezier(this.refPositions);
+		const lut = spline.getLUT(this.stepCount);
+		
+		for (let i = 0, l = this.stepCount; i <= l; i++) {
+			this.path[i].x = lut[i].x
+			this.path[i].y = lut[i].y
+		}
 	}
 }
 
