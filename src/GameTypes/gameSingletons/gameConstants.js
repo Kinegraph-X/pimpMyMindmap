@@ -29,7 +29,6 @@ const curveTypes = {
 	doubleQuad : 'doubleQuad'
 }
 
-const themesCount = 8;
 /**
  * @constructor themeDescriptorsFactory
  * 
@@ -50,7 +49,7 @@ const themesCount = 8;
  * @return {Object.<String, String|Boolean>}
  */
 const ThemeDescriptorFromFactory = function(
-	id = themesCount,
+	id,
 	showBranchFruits = true,
 	showLeafFruits = false,
 	showRootBox = false,

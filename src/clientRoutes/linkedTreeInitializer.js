@@ -137,7 +137,8 @@ var rootViewInitializer = function(options) {
 							nodeName : 'span',
 							attributes : [
 								{className : 'welcome'},
-								{innerHTML : 'Welcome to '}
+								{innerHTML : 'Welcome to '},
+								{title : 'Pimp my Mindmap / Pimp my Mind-Map / Pimp my Mind Map'}
 							]
 						}),
 						TypeManager.createDef({
@@ -149,7 +150,7 @@ var rootViewInitializer = function(options) {
 						TypeManager.createDef({
 							nodeName : 'p',
 							attributes : [
-								{innerHTML : 'You can use a map you\'ve already created in another website or write it directly here in an indented text representation (<i>Create you map</i> button) or add a map_id from another site (currently only wisemap.ai) in the url.'}
+								{innerHTML : 'You can use a map you\'ve already created in another website or write it directly here in an indented text representation (<i>Create you map</i> button) or query it from another site (tested with wisemap.ai, but definitve implementations soon to come).'}
 							]
 						}),
 						TypeManager.createDef({

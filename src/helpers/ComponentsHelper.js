@@ -364,6 +364,9 @@ ComponentsHelper.prototype.prePopulateStoreForSecondColumn = function() {
 	}.bind(this));
 }
 
+/**
+ * @template KeyOfThemeDescriptorFromFactory extends keyof ThemeDescriptorFromFactory
+ */
 
 /**
  * @method populateCheckboxesFromThemeDescriptor
@@ -373,8 +376,9 @@ ComponentsHelper.prototype.populateCheckboxesFromThemeDescriptor = function() {
 	const themeDescriptor = themeDescriptors[this.userThemeName];
 	// @ts-ignore Framework specialties
 	this.themeEditorComponent._children[3]._children[0]._children.forEach(function(child) {
-		/** type {keyof ThemeDescriptorFromFactory} */
-		const propertyName = child.view.getMasterNode().title;
+		/** @type {{title : keyof ThemeDescriptorFromFactory}} */
+		const elem  = child.view.getMasterNode();
+		const propertyName = elem.title;
 
 		// @ts-ignore Framework specialties
 		if (child.streams.checked)
@@ -384,7 +388,6 @@ ComponentsHelper.prototype.populateCheckboxesFromThemeDescriptor = function() {
 			// @ts-ignore Framework specialties
 			child.setValue(themeDescriptor[propertyName]);					// text-inputs
 		
-		// @ts-ignore can't get to make the "keyof" type work
 		child.savableStore.update(propertyName, themeDescriptor[propertyName]);
 		// @ts-ignore Framework specialties
 		child.addEventListener('update', function(e) {
@@ -392,9 +395,11 @@ ComponentsHelper.prototype.populateCheckboxesFromThemeDescriptor = function() {
 			themeDescriptors[GameState().currentTheme][propertyName] = child.getValue();
 			// @ts-ignore Framework specialties
 			self.trigger('themeEditorNeedsRefresh');
-		})
+		});
 	});
 }
+
+const ThemeDescriptorFromFactoryProps = ['id'];
 
 /**
  * @method createPixiTexture
